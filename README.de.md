@@ -2,11 +2,11 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [Français](README.fr.md) · **Deutsch** · [Español](README.es.md)
 
-Ein lokaler Videoplayer für macOS, entwickelt mit AppKit und libmpv. Mit einer Hand auf der Tastatur lassen sich Videos durchsuchen, Wiedergabeposition und Einstellungen ändern und Bedienelemente in einer nativen Oberfläche öffnen.
+Ein lokaler Videoplayer für macOS, entwickelt mit AppKit und libmpv. Tastenkürzel machen das Durchsuchen von Videos, das Spulen und die Wiedergabe flüssig, damit du dich ganz auf das Video konzentrieren kannst.
 
 ## Funktionen
 
-- **Einhändige Bedienung.** Die Belegungen WASD für die linke und IJKL für die rechte Hand entsprechen den Pfeiltasten bei der Wiedergabe, in der Wiedergabeliste und in den Schnellsteuerungen. Tastenkürzel lassen sich für jede Hand getrennt anpassen.
+- **Tastenkürzel.** Durchsuche Videos, spule und passe die Wiedergabe mit reaktionsschnellen, anpassbaren Bedienelementen an.
 - **Lokale Wiedergabe.** Dateien oder Ordner öffnen, Videos ins Fenster ziehen oder über den Finder öffnen. Die Standardversion sucht im Hintergrund nach weiteren Videos im selben Ordner und passenden Untertiteln.
 - **Vorschau in der Wiedergabeliste.** Ein Klick auf ein Video startet die Wiedergabe. Beim Durchblättern mit der Tastatur erscheint vor der Bestätigung eine stumme Miniaturvorschau. Es stehen eine kompakte Ansicht und eine Ansicht mit großer Vorschau zur Verfügung.
 - **Globale Lautstärke.** Die Lautstärkeeinstellung gilt für alle Videos und bleibt bei Dateiwechseln sowie nach einem Neustart der App erhalten. Ältere Verlaufseinträge eines Videos können den aktuellen Pegel nicht überschreiben.

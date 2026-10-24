@@ -2,11 +2,11 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · **Español**
 
-Un reproductor de vídeo local para macOS, creado con AppKit y libmpv. Mantén una mano en el teclado para recorrer vídeos, desplazarte por la reproducción, ajustar sus opciones y abrir los controles desde una interfaz nativa.
+Un reproductor de vídeo local para macOS, creado con AppKit y libmpv. Los atajos de teclado hacen que recorrer vídeos, desplazarse por ellos y controlar la reproducción sea fluido, para que puedas concentrarte en el vídeo.
 
 ## Funciones
 
-- **Control con una mano.** Los perfiles WASD para la mano izquierda e IJKL para la derecha reproducen el comportamiento de las flechas durante la reproducción, en la lista de reproducción y en los controles rápidos. Puedes personalizar los atajos de cada mano.
+- **Atajos de teclado.** Recorre vídeos, desplázate por ellos y ajusta la reproducción con controles ágiles y personalizables.
 - **Reproducción local.** Abre archivos o carpetas, arrastra vídeos a la ventana o ábrelos desde Finder. La compilación estándar busca en segundo plano los vídeos de la misma carpeta y los subtítulos correspondientes.
 - **Vistas previas en la lista.** Haz clic en un vídeo para reproducirlo o recorre la lista con el teclado para ver una vista previa en miniatura y sin sonido antes de confirmar. Hay diseños compactos y con vistas previas grandes.
 - **Volumen global.** Los cambios de volumen se aplican a todos los vídeos y se conservan al cambiar de archivo y reiniciar la aplicación. El historial antiguo de un vídeo no puede sustituir el nivel actual.

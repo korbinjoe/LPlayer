@@ -2,11 +2,11 @@
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · **Français** · [Deutsch](README.de.md) · [Español](README.es.md)
 
-Un lecteur vidéo local pour macOS, conçu avec AppKit et libmpv. Une seule main sur le clavier suffit pour parcourir les vidéos, se déplacer dans la lecture, ajuster les réglages et ouvrir les commandes dans une interface native.
+Un lecteur vidéo local pour macOS, conçu avec AppKit et libmpv. Les raccourcis clavier rendent la navigation, le déplacement dans la vidéo et la lecture fluides, pour vous permettre de vous concentrer sur la vidéo.
 
 ## Fonctionnalités
 
-- **Commandes à une main.** Les configurations WASD pour la main gauche et IJKL pour la main droite reproduisent le comportement des flèches pendant la lecture, dans la liste de lecture et dans les commandes rapides. Les raccourcis sont personnalisables pour chaque main.
+- **Raccourcis clavier.** Parcourez les vidéos, déplacez-vous dans la lecture et ajustez les réglages avec des commandes réactives et personnalisables.
 - **Lecture locale.** Ouvrez des fichiers ou des dossiers, glissez des vidéos dans la fenêtre ou ouvrez-les depuis le Finder. La version standard recherche en arrière-plan les autres vidéos du même dossier et les sous-titres correspondants.
 - **Aperçus dans la liste de lecture.** Cliquez sur une vidéo pour la lire, ou parcourez la liste au clavier pour afficher un aperçu miniature muet avant de confirmer. Deux dispositions sont disponibles : compacte et avec un grand aperçu.
 - **Volume global.** Le réglage du volume s'applique à toutes les vidéos et est conservé lors des changements de fichier et des redémarrages de l'application. L'ancien historique d'une vidéo ne peut pas remplacer le niveau actuel.

@@ -2,11 +2,11 @@
 
 **English** · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md)
 
-A local video player for macOS, built with AppKit and libmpv. Keep one hand on the keyboard to browse videos, seek, adjust playback, and open controls through a native interface.
+A local video player for macOS, built with AppKit and libmpv. Keyboard shortcuts make browsing, seeking, and playback fluid, so you can focus on the video.
 
 ## Features
 
-- **One-hand controls.** Left-hand WASD and right-hand IJKL presets mirror the arrow keys in playback, the playlist, and Quick Controls. Shortcuts can be customized for each hand.
+- **Keyboard shortcuts.** Browse videos, seek, and adjust playback with responsive, customizable controls.
 - **Local playback.** Open files or folders, drag videos into the window, or open them from Finder. The standard build discovers sibling videos and matching subtitles in the background.
 - **Playlist previews.** Click a video to play it, or browse with the keyboard to see a silent thumbnail preview before confirming. Compact and large-preview layouts are available.
 - **Global volume.** Volume adjustments apply to every video and survive file switches and app restarts. A video's old history cannot override the current level.
