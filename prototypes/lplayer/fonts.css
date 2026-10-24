@@ -1,0 +1,28 @@
+@font-face{font-family:'LP Manrope';src:url('assets/fonts/Manrope.ttf') format('truetype');font-style:normal;font-weight:200 800;font-display:swap}
+@font-face{font-family:'LP Outfit';src:url('assets/fonts/Outfit.ttf') format('truetype');font-style:normal;font-weight:100 900;font-display:swap}
+@font-face{font-family:'LP Space Grotesk';src:url('assets/fonts/SpaceGrotesk.ttf') format('truetype');font-style:normal;font-weight:300 700;font-display:swap}
+body{--brand-font:'LP Manrope',sans-serif}
+body[data-brand-font=outfit]{--brand-font:'LP Outfit',sans-serif}
+body[data-brand-font=space]{--brand-font:'LP Space Grotesk',sans-serif}
+.app-name,.app-menu-brand strong,#lp-dialog-root .lpdlg-brand strong,.brand-wordmark{font-family:var(--brand-font);font-weight:600;letter-spacing:-.035em;font-synthesis:none}
+.app-name{font-size:17px;line-height:1.2;gap:9px;padding:5px 3px}
+.app-menu-brand strong{font-size:17px}
+#lp-dialog-root .lpdlg-brand strong{font-size:16px;line-height:1.2;letter-spacing:-.035em}
+@media(min-width:480px) and (max-width:720px){.app-name{display:flex;font-size:15px;gap:5px}.window-left{gap:11px}.app-name .icon{width:10px;height:10px}}
+#lp-dialog-root .lpdlg-wordmark-preview{display:flex;align-items:center;justify-content:center;gap:18px;min-height:104px;margin:7px 0 14px;border-bottom:1px solid var(--lpdlg-line)}
+#lp-dialog-root .lpdlg-wordmark-preview>img{width:52px;height:52px;object-fit:contain}
+#lp-dialog-root .lpdlg-wordmark-preview .brand-wordmark{font-size:46px;line-height:1.1;letter-spacing:-.045em}
+#lp-dialog-root .lpdlg-font-list{border:1px solid var(--lpdlg-line);border-radius:9px;overflow:hidden;background:var(--lpdlg-panel)}
+#lp-dialog-root .lpdlg-font-choice{display:grid;grid-template-columns:minmax(100px,1fr) minmax(128px,1.05fr) 16px;align-items:center;gap:14px;width:100%;min-height:71px;padding:10px 15px;border:0;border-radius:0;background:none;color:var(--lpdlg-text);text-align:left}
+#lp-dialog-root .lpdlg-font-choice+.lpdlg-font-choice{border-top:1px solid var(--lpdlg-line)}
+#lp-dialog-root .lpdlg-font-choice:hover{background:var(--lpdlg-panel-hover)}
+#lp-dialog-root .lpdlg-font-choice.is-selected{background:rgba(10,132,255,.10)}
+#lp-dialog-root .lpdlg-font-specimen{font-family:var(--specimen-font),sans-serif;font-size:29px;line-height:1.2;font-weight:600;letter-spacing:-.035em;font-synthesis:none}
+#lp-dialog-root .lpdlg-font-meta{display:flex;flex-direction:column;gap:5px}
+#lp-dialog-root .lpdlg-font-meta strong{font-size:12px;font-weight:500}
+#lp-dialog-root .lpdlg-font-meta small{font-size:10px;line-height:1.4;color:var(--lpdlg-secondary)}
+#lp-dialog-root .lpdlg-font-check{width:15px;height:15px;opacity:0;filter:brightness(0) saturate(100%) invert(45%) sepia(96%) saturate(3652%) hue-rotate(194deg) brightness(105%) contrast(103%)}
+#lp-dialog-root .lpdlg-font-choice.is-selected .lpdlg-font-check{opacity:1}
+#lp-dialog-root .lpdlg-nav-icon-typography{background:#bc794b}
+#lp-dialog-root .lpdlg-font-note{font-size:10px;line-height:1.6;color:var(--lpdlg-secondary);margin:10px 4px 0}
+@media(max-width:650px){#lp-dialog-root .lpdlg-font-choice{padding:10px;gap:9px;grid-template-columns:minmax(85px,1fr) minmax(108px,1fr) 14px}#lp-dialog-root .lpdlg-font-specimen{font-size:25px}#lp-dialog-root .lpdlg-wordmark-preview .brand-wordmark{font-size:40px}#lp-dialog-root .lpdlg-wordmark-preview{gap:12px}#lp-dialog-root .lpdlg-wordmark-preview>img{width:44px;height:44px}}

@@ -1,0 +1,41 @@
+Selected by user: first design (P1 / rounded contour), 2026-10-24.
+Selected original: Resources/icon-explorations/2026-10-24/designed/01-rounded.png
+Production cutout: Resources/icon-explorations/2026-10-24/designed/01-rounded-transparent.png
+Generation and editing: built-in ImageGen. Generated RGBA and alpha copied unchanged.
+Two ivory components remain: continuous left/lower L and detached upper diagonal.
+QA: mark mask IoU 99.635 percent versus selected source, component bounding boxes unchanged; interior alpha 252-254 with no holes. Cutout coral median changed from RGB(249,50,48) to RGB(248,43,43); not pixel-identical color.
+
+DESIGN AND TARGETED REFINEMENT PROMPTS
+P1 rounded contour — native imagegen generation record
+Initial style reference: Resources/icon-explorations/2026-10-24/detached-play/style-reference.png
+Initial output: [local generated_images]/01a16961-3359-7e60-9fbe-650a01586ef9/exec-3ad0275b-7b41-4880-8bf6-a6b56673670a.png
+transparent_background: false
+
+INITIAL PROMPT (exact)
+Use case: logo-brand. Design one new LPlayer app icon using the reference for its warm red/ivory identity, flowing rounded curves and compact visual confidence.
+
+Reimagine its mark as a generous, beautifully balanced right-facing play triangle made of exactly two ivory pieces. The left vertical edge flows through a full, soft lower-left turn into the rising lower diagonal: one continuous L. The upper diagonal is the second piece, clearly detached at BOTH ends. Make the two coral openings short, clean and softly related, with comfortable visible breathing room. Keep the triangular outer silhouette and inner space visually coherent. Let the curves, proportions and optical weight feel designed together, rather than separate bars assembled into a symbol.
+
+Preserve fullness without swollen joints. No hooked ends, rolled edges, needle-like seams or separate arrowhead.
+
+Creamy ivory #FFF8EC on a flat coral-red #FF3B35 rounded-square tile; warm-gray #F1EEE8 surrounding canvas. Mark about 62% of tile width, tile about 84% of canvas. Fully opaque. Pure 2D uniform fills, no gradients, lighting, shadows, texture, bevels or dimensional folds. One icon, no text, labels, watermark, collage or mockup.
+
+TARGETED REFINEMENT
+Reference image: [local generated_images]/01a16961-3359-7e60-9fbe-650a01586ef9/exec-3ad0275b-7b41-4880-8bf6-a6b56673670a.png
+Final output: [local generated_images]/01a16961-3359-7e60-9fbe-650a01586ef9/exec-0d9e7cea-78fa-4d2f-bf0f-393ff00a0553.png
+transparent_background: false
+Reason: The initial upper-band ends remained needle-like; refine only the two openings.
+
+FINAL EDIT PROMPT (exact)
+Use case: precise-object-edit.
+Refine only the two openings in this LPlayer icon. Keep the flowing rounded triangular design, L-shaped lower piece, proportions, ivory/coral palette, tile and warm-gray canvas.
+
+The upper diagonal must remain a separate ivory piece at both ends. Remove its needle-like tapered tips. Shorten those tips into soft, blunt, generously rounded cut faces that visually correspond to the adjacent L ends. Make the coral channels clearly open across the full band, with comfortable consistent breathing room. Neither gap may taper to a zero-width seam or imply a curled flap. Preserve the elegant curvature and full triangular silhouette; the upper band should still feel part of the same emblem, not a disconnected pill floating away.
+
+Exactly two ivory components: continuous left-and-lower L, detached upper diagonal. Pure flat 2D uniform solid fills, opaque canvas. No additional parts, shadows, gradients, folds, texture, lighting, text or mockup.
+
+
+PRODUCTION BACKGROUND EXTRACTION PROMPT
+Use case: background-extraction
+The supplied image is the exact USER-APPROVED LPlayer app icon. Change only the pale warm-gray canvas OUTSIDE the coral-red rounded-square tile to genuine transparent alpha. This is a production cutout, not a redesign.
+Preserve the entire tile and both ivory components exactly: same outer boundary, corner radius, margins, size, placement, colors, broad rounded L, detached upper diagonal, both red gaps, rounded terminals, and smooth curves. Keep every part INSIDE the tile fully opaque, including the red triangular counter and both red gaps. Only the exterior canvas becomes transparent. No holes or mottled alpha within the tile; no halo, extra shadow, texture, text, added detail, rescaling, cropping, recoloring or reshaping. Preserve the square canvas and existing framing. Output one clean RGBA icon with antialiased transparent outer edges.

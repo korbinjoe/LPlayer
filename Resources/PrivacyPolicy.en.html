@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>LPlayer Privacy Policy</title>
+  <style>
+    :root { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; color-scheme: light dark; }
+    body { max-width: 760px; margin: 48px auto; padding: 0 24px 40px; line-height: 1.65; }
+    h1 { font-size: 30px; line-height: 1.2; } h2 { margin-top: 30px; font-size: 20px; }
+    .date { color: #737373; } a { color: #397e29; } li { margin: 8px 0; }
+    @media (prefers-color-scheme: dark) { a { color: #b0e874; } .date { color: #aaa; } }
+  </style>
+</head>
+<body>
+  <main>
+    <nav aria-label="Language"><a href="PrivacyPolicy.zh-Hans.html" lang="zh-Hans">简体中文</a></nav>
+    <h1>LPlayer Privacy Policy</h1>
+    <p class="date">Last updated: October 23, 2026</p>
+    <p>This policy describes the local-only Mac App Store build of LPlayer. LPlayer plays video and subtitle files that you choose on your Mac. It does not require an account, include advertising or analytics, track you, or automatically upload your media or viewing activity to the developer or a third party.</p>
+    <h2>Files you choose</h2>
+    <p>LPlayer reads your selected media, audio tracks, subtitles and file metadata to play them and create previews. If you grant access to a folder, it can list videos and find matching subtitles in that folder. This processing takes place on your Mac. The player requests read-only access and does not change your original media or subtitle files.</p>
+    <h2>Information kept on your Mac</h2>
+    <ul>
+      <li><strong>Watch history:</strong> up to 30 recent files, including their names, paths, playback position, duration, speed, volume, subtitle settings, selected tracks and the time the entry was updated.</li>
+      <li><strong>Preferences:</strong> your interface language, left- or right-hand controls and customized keyboard shortcuts. The Mac's language preferences help choose media tracks.</li>
+      <li><strong>File permissions:</strong> up to 96 saved, read-only security-scoped bookmarks let LPlayer reopen files and folders you previously allowed. These records may contain file location information. They are stored locally in the app's private data area.</li>
+      <li><strong>Previews:</strong> decoded thumbnail images are cached in memory while the app runs. LPlayer does not save a thumbnail library to disk.</li>
+    </ul>
+    <p>History and file-permission records are stored in LPlayer's Application Support directory inside its macOS app container. Preferences are stored using macOS preferences. These records are not encrypted separately by LPlayer; their protection depends on your Mac's account, disk and backup settings.</p>
+    <h2>Your choices and deletion</h2>
+    <p><strong>Private playback</strong> stops new watch-history entries and new persistent file-permission records while it is enabled. It does not erase earlier history, preferences or permissions, or hide activity from macOS or other software on your Mac.</p>
+    <p>Turn off Private playback, then use <strong>File → Clear Watch History</strong> to delete saved watch history and file-permission bookmarks. You can also use <strong>File → Clear Saved File Access</strong> to remove saved permissions while keeping watch history. A file or folder already opened by the current session may remain accessible until you quit LPlayer. Opening files again can create new records when Private playback is off. Preferences remain until you reset or remove the app's local data. Your Mac's backups may retain older copies according to your backup settings.</p>
+    <h2>Connections and diagnostics</h2>
+    <p>The Mac App Store build has no permission to initiate network connections. It has no online streaming, cloud sync, online subtitle search or automatic update service of its own. macOS and the App Store may separately use network services under Apple's policies.</p>
+    <p>LPlayer does not automatically send crash reports or usage logs. If you explicitly launch a diagnostic session, playback state and file paths may be written to the local diagnostic file you specify. Such a file is not uploaded by LPlayer. Review it before sharing it with anyone.</p>
+    <h2>Contact and changes</h2>
+    <p>For privacy questions, contact the developer through <strong>App Support</strong> on LPlayer's App Store product page. If you choose to contact support, share only the information necessary to explain your question. LPlayer does not send support messages automatically.</p>
+    <p>Changes to this policy will be reflected in its update date. Any change to LPlayer's data handling will also require an updated policy and App Store privacy information.</p>
+  </main>
+</body>
+</html>
