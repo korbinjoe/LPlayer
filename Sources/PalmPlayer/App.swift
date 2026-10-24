@@ -35,12 +35,12 @@ private struct PanelPresentation: Equatable {
 
 private struct ZoomPresentation: Equatable {
     var visible: Bool; var scale: Double; var videoFrame: NSRect; var surfaceSize: NSSize
-    var resetKey: String; var language: AppLanguage; var panning: Bool
+    var resetKey: String; var zoomKeys: String; var language: AppLanguage; var panning: Bool
 }
 
 final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuItemValidation {
-    private static let topBarHeight: CGFloat = 55
-    private static let bottomBarHeight: CGFloat = 99
+    private static let topBarHeight: CGFloat = 38
+    private static let bottomBarHeight: CGFloat = 56
     private var window: NSWindow!
     private var surface: PlayerSurface!
     private var engine: MPVEngine!
@@ -114,7 +114,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
     private var thumbnailImage: NSImage?
 
     private let topBar = PlayerTitlebarView()
-    private let bottomBar = NSView()
+    private let bottomBar = PlayerChromeContainerView()
     private let brand = label("LPlayer", size: 11, color: .white, weight: .semibold)
     private let fileTitle = label(L10n.text("No video open", "未打开视频"), size: 13, color: .white, weight: .medium)
     private var brandMenuButton: NSButton!
@@ -125,7 +125,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
     private let bottomDivider = ChromeDivider()
     private let emptyState = PlayerEmptyState(frame: .zero)
     private let mediaBadge = RoundedView(color: Palette.panel, radius: 5)
-    private let mediaBadgeLabel = label("", size: 10, color: Palette.muted, weight: .medium)
+    private let mediaBadgeLabel = label("", size: 10, color: Palette.overlaySecondary, weight: .medium, overVideo: true)
     private var topOpenButton: NSButton!
     private var helpButton: NSButton!
     private var playlistButton: NSButton!
@@ -144,11 +144,9 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
     private var volumeButton: NSButton!
     private let progress = SeekSlider(value: 0, minValue: 0, maxValue: 1, target: nil, action: nil)
     private let volume = NSSlider(value: 70, minValue: 0, maxValue: 100, target: nil, action: nil)
-    private let timeLabel = label("00:00 / 00:00", size: 11, color: Palette.muted)
-    private let remainingTime = label("−00:00", size: 10, color: Palette.muted)
-    private let mediaMetadata = label("", size: 10, color: Palette.muted)
+    private let timeLabel = label("00:00 / 00:00", size: 10, color: Palette.overlaySecondary)
     private let hud = RoundedView(color: Palette.panel, radius: 12)
-    private let hudLabel = label("", size: 15, color: .white, weight: .medium)
+    private let hudLabel = label("", size: 15, color: .white, weight: .medium, overVideo: true)
     private var hudTimer: Timer?
     private var controlsTimer: Timer?
     private var controlsHideDeadline: TimeInterval = 0
@@ -158,12 +156,12 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
     private let playlist = PlaylistView(frame: .zero)
     private var playlistSelection = 0
     private let panel = RoundedView(color: Palette.panel, radius: 13)
-    private let panelTitle = label(L10n.text("Quick Controls", "快捷调节"), size: 13, color: .white, weight: .semibold)
-    private let panelHint = label("", size: 10, color: Palette.muted)
+    private let panelTitle = label(L10n.text("Quick Controls", "快捷调节"), size: 13, color: .white, weight: .semibold, overVideo: true)
+    private let panelHint = label("", size: 10, color: Palette.overlaySecondary, overVideo: true)
     private var panelCloseButton: NSButton!
     private var panelSettingsButton: NSButton!
     private let panelFooterLine = ChromeDivider()
-    private let panelGroupLabels = (0..<4).map { _ in label("", size: 10, color: Palette.muted) }
+    private let panelGroupLabels = (0..<4).map { _ in label("", size: 10, color: Palette.overlaySecondary, overVideo: true) }
     private let panelGroupLines = (0..<3).map { _ in ChromeDivider() }
     private let panelScroll = NSScrollView()
     private let panelDocument = FlippedView()
@@ -173,8 +171,8 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
     private var presentedSpeedValues: [Double] = [0.5, 0.75, 1, 1.25, 1.5, 2]
     private var lastPanelSignature = ""
     private let errorBox = RoundedView(color: Palette.panel, radius: 16)
-    private let errorTitle = label(L10n.text("Unable to play this video", "这个视频暂时无法播放"), size: 18, color: .white, weight: .semibold)
-    private let errorMessage = label("", size: 13, color: Palette.muted)
+    private let errorTitle = label(L10n.text("Unable to play this video", "这个视频暂时无法播放"), size: 18, color: .white, weight: .semibold, overVideo: true)
+    private let errorMessage = label("", size: 13, color: Palette.overlaySecondary, overVideo: true)
     private var playbackError: String?
     private var playbackFailureReason: PlaybackFailureReason?
     private var pendingOpen: [URL] = []
@@ -238,7 +236,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         let toolbar = NSToolbar(identifier: "LPlayer.WindowToolbar")
         toolbar.showsBaselineSeparator = false
         toolbar.allowsUserCustomization = false
-        window.toolbarStyle = .unified
+        window.toolbarStyle = .unifiedCompact
         window.toolbar = toolbar
         // Adding the native toolbar adjusts AppKit's stored frame limits.
         window.minSize = NSSize(width: 860, height: 550)
@@ -300,8 +298,11 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         speedButton.font = .systemFont(ofSize: 12, weight: .medium)
         panelButton = symbolButton("slider.horizontal.3", label: L10n.text("Quick controls C", "快捷面板 C"), target: self, action: #selector(togglePanel))
         moreButton = symbolButton("ellipsis", label: L10n.text("More", "更多操作"), target: self, action: #selector(showMoreMenu))
-        let controlViews: [NSView] = [previousVideoButton!, playButton!, backwardButton!, forwardButton!, nextVideoButton!, fullscreenButton!, subtitleButton!, volumeButton!, speedButton!, panelButton!, moreButton!, progress, volume, timeLabel, remainingTime, mediaMetadata, bottomDivider]
+        let controlViews: [NSView] = [previousVideoButton!, playButton!, backwardButton!, forwardButton!, nextVideoButton!, fullscreenButton!, subtitleButton!, volumeButton!, speedButton!, panelButton!, moreButton!, progress, volume, timeLabel, bottomDivider]
         for view in controlViews { bottomBar.addSubview(view) }
+        // Keep the existing hit regions; draw compact hover/selection plates
+        // and a smaller play circle inside those targets.
+        for button in controlViews.compactMap({ $0 as? ChromeButton }) { button.visualInset = 2 }
         progress.cell = ChromeSliderCell(); progress.minValue = 0; progress.maxValue = 1
         progress.target = self; progress.action = #selector(scrub); progress.isContinuous = false
         progress.controlSize = .small; progress.setAccessibilityLabel(L10n.text("Playback position", "播放进度"))
@@ -316,7 +317,6 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         volume.target = self; volume.action = #selector(changeVolume); volume.isContinuous = true
         volume.controlSize = .small; volume.setAccessibilityLabel(L10n.text("Volume", "音量"))
         timeLabel.font = .monospacedDigitSystemFont(ofSize: 10, weight: .regular)
-        remainingTime.font = .monospacedDigitSystemFont(ofSize: 10, weight: .regular); remainingTime.alignment = .right
         hud.addSubview(hudLabel); hudLabel.alignment = .center
         hud.passesThroughEvents = true
         help.onClose = { [weak self] in self?.toggleHelp() }
@@ -337,7 +337,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         panelSettingsButton = ChromeButton(title: L10n.text("Settings…", "设置…"), target: self, action: #selector(showSettings))
         panelSettingsButton.isBordered = false; panelSettingsButton.font = .systemFont(ofSize: 10.5)
         panelSettingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
-        panelSettingsButton.imagePosition = .imageTrailing; panelSettingsButton.contentTintColor = Palette.muted
+        panelSettingsButton.imagePosition = .imageTrailing; panelSettingsButton.contentTintColor = Palette.overlaySecondary
         panelHint.maximumNumberOfLines = 2; panelHint.lineBreakMode = .byWordWrapping
         let panelViews: [NSView] = [panelTitle, panelHint, panelScroll, panelCloseButton!, panelSettingsButton!, panelFooterLine]
         panelViews.forEach { panel.addSubview($0) }
@@ -381,15 +381,17 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         let brandWidth = ceil(brand.fittingSize.width)
         let brandHeight = min(Self.topBarHeight - 4, max(18, ceil(brand.fittingSize.height)))
         brand.frame = NSRect(x: leading, y: floor((Self.topBarHeight - brandHeight) / 2), width: brandWidth, height: brandHeight)
-        brandMenuButton.frame = NSRect(x: leading + brandWidth + 1, y: 19, width: 17, height: 17)
+        let chevronY = floor((Self.topBarHeight - 17) / 2)
+        let buttonY = floor((Self.topBarHeight - 28) / 2)
+        brandMenuButton.frame = NSRect(x: leading + brandWidth + 1, y: chevronY, width: 17, height: 17)
         let titleWidth = max(80, min(390, w - 2 * max(leading + brandWidth + 36, 190)))
-        fileTitle.frame = NSRect(x: (w - titleWidth) / 2 - 8, y: 17, width: titleWidth, height: 21)
+        fileTitle.frame = NSRect(x: (w - titleWidth) / 2 - 8, y: floor((Self.topBarHeight - 21) / 2), width: titleWidth, height: 21)
         let measured = min(titleWidth, ceil(fileTitle.fittingSize.width))
-        fileInfoButton.frame = NSRect(x: min(w / 2 + measured / 2 - 5, fileTitle.frame.maxX), y: 19, width: 16, height: 17)
-        topOpenButton.frame = NSRect(x: w - 137, y: 12, width: 75, height: 31)
-        playlistButton.frame = NSRect(x: w - 46, y: 12, width: 31, height: 31)
-        privateButton.frame = NSRect(x: w - 202, y: 15, width: 58, height: 25)
-        toolbarDivider.frame = NSRect(x: w - 57, y: 20, width: 1, height: 16)
+        fileInfoButton.frame = NSRect(x: min(w / 2 + measured / 2 - 5, fileTitle.frame.maxX), y: chevronY, width: 16, height: 17)
+        topOpenButton.frame = NSRect(x: w - 137, y: buttonY, width: 75, height: 28)
+        playlistButton.frame = NSRect(x: w - 46, y: buttonY, width: 31, height: 28)
+        privateButton.frame = NSRect(x: w - 202, y: floor((Self.topBarHeight - 25) / 2), width: 58, height: 25)
+        toolbarDivider.frame = NSRect(x: w - 57, y: floor((Self.topBarHeight - 16) / 2), width: 1, height: 16)
         topDivider.frame = NSRect(x: 0, y: 0, width: w, height: 1)
     }
 
@@ -424,60 +426,78 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         guard surface != nil else { return }
         let w = surface.bounds.width, h = surface.bounds.height
         let topHeight = Self.topBarHeight
+        let isFullscreen = window.styleMask.contains(.fullScreen)
         let hasMedia = currentURL != nil
         let bottomHeight: CGFloat = hasMedia ? Self.bottomBarHeight : 0
         let helpWidth = LPlayerShortcutHelpView.preferredWidth
         let sidebarOpen = !help.isHidden || !playlist.isHidden
         let sidebarWidth = playlist.isHidden ? helpWidth : playlist.sidebarWidth
-        let playerWidth = max(1, w - (sidebarOpen ? sidebarWidth : 0))
-        let videoRect = NSRect(x: 0, y: bottomHeight, width: playerWidth, height: max(1, h - topHeight - bottomHeight))
-        let subtitleSafeArea: CGFloat = 20
-        let margin = Int(ceil(720 * subtitleSafeArea / max(1, videoRect.height)))
-        if margin != subtitleMargin { subtitleMargin = margin; engine.setDouble("sub-margin-y", Double(margin)) }
+        let playerWidth = max(1, w - (sidebarOpen && !isFullscreen ? sidebarWidth : 0))
+        // Sidebars can cover the fullscreen picture, but must not cover
+        // transport controls or their pointer and keyboard focus targets.
+        let transportWidth = max(1, w - (sidebarOpen ? sidebarWidth : 0))
+        // Fullscreen chrome floats over the picture. Fading the controls must
+        // never leave their former layout space as black strips.
+        let videoRect = isFullscreen ? NSRect(x: 0, y: 0, width: playerWidth, height: h)
+            : NSRect(x: 0, y: bottomHeight, width: playerWidth, height: max(1, h - topHeight - bottomHeight))
+        let overlayRect = NSRect(x: 0, y: bottomHeight, width: playerWidth, height: max(1, h - topHeight - bottomHeight))
         engine.videoView.frame = videoRect
+        updateSubtitleSafeArea()
+        let chromeColor = isFullscreen ? Palette.panel : Palette.chrome
+        topBar.layer?.backgroundColor = chromeColor.cgColor
+        bottomBar.layer?.backgroundColor = chromeColor.cgColor
+        help.overlaysVideo = isFullscreen
+        playlist.overlaysVideo = isFullscreen
         emptyState.frame = NSRect(x: 0, y: 0, width: playerWidth, height: h - topHeight)
         emptyState.isHidden = hasMedia
         bottomBar.isHidden = !hasMedia
         mediaBadge.isHidden = !hasMedia
         let badgeWidth = ceil(mediaBadgeLabel.fittingSize.width) + 22
-        mediaBadge.frame = NSRect(x: 24, y: videoRect.maxY - 53, width: badgeWidth, height: 27)
+        mediaBadge.frame = NSRect(x: 24, y: overlayRect.maxY - 53, width: badgeWidth, height: 27)
         mediaBadgeLabel.frame = NSRect(x: 11, y: 6, width: badgeWidth - 22, height: 16)
         updateVideoZoomPresentation()
         topBar.frame = NSRect(x: 0, y: h - topHeight, width: w, height: topHeight)
-        bottomBar.frame = NSRect(x: 0, y: 0, width: playerWidth, height: Self.bottomBarHeight)
+        bottomBar.frame = NSRect(x: 0, y: 0, width: transportWidth, height: Self.bottomBarHeight)
         layoutTitlebar()
-        bottomDivider.frame = NSRect(x: 0, y: Self.bottomBarHeight - 1, width: playerWidth, height: 1)
-        progress.frame = NSRect(x: 17, y: 76, width: playerWidth - 34, height: 16)
-        timeLabel.frame = NSRect(x: 17, y: 60, width: 110, height: 14)
-        remainingTime.frame = NSRect(x: playerWidth - 127, y: 60, width: 110, height: 14)
-        volumeButton.frame = NSRect(x: 17, y: 18, width: 30, height: 30)
-        volume.frame = NSRect(x: 56, y: 23, width: 62, height: 20)
-        mediaMetadata.frame = NSRect(x: 137, y: 25, width: 140, height: 16)
-        mediaMetadata.isHidden = playerWidth < 950
-        let center = playerWidth / 2
-        playButton.frame = NSRect(x: center - 19, y: 14, width: 38, height: 38)
-        backwardButton.frame = NSRect(x: center - 64, y: 17, width: 32, height: 32)
-        forwardButton.frame = NSRect(x: center + 32, y: 17, width: 32, height: 32)
-        previousVideoButton.frame = NSRect(x: center - 105, y: 17, width: 30, height: 32)
-        nextVideoButton.frame = NSRect(x: center + 75, y: 17, width: 30, height: 32)
-        previousVideoButton.isHidden = playerWidth < 950; nextVideoButton.isHidden = playerWidth < 950
-        let trailing = playerWidth - 191
-        speedButton.frame = NSRect(x: trailing, y: 18, width: 39, height: 30)
-        subtitleButton.frame = NSRect(x: trailing + 41, y: 18, width: 30, height: 30)
-        panelButton.frame = NSRect(x: trailing + 75, y: 18, width: 30, height: 30)
-        moreButton.frame = NSRect(x: trailing + 109, y: 18, width: 30, height: 30)
-        fullscreenButton.frame = NSRect(x: trailing + 146, y: 18, width: 30, height: 30)
-        volume.isHidden = playerWidth < 650
+        bottomDivider.frame = NSRect(x: 0, y: Self.bottomBarHeight - 1, width: transportWidth, height: 1)
+        // A slim seek strip above one transport row. Its hit region stays
+        // separate from the buttons, even when the sidebar narrows the bar.
+        progress.frame = NSRect(x: 20, y: 42, width: max(1, transportWidth - 40), height: 14)
+        volumeButton.frame = NSRect(x: 20, y: 8, width: 32, height: 32)
+        volume.frame = NSRect(x: 60, y: 14, width: 68, height: 20)
+        volume.isHidden = transportWidth < 700
+        timeLabel.frame = NSRect(x: volume.isHidden ? 60 : 140, y: 16,
+                                 width: transportWidth < 500 ? 34 : 120, height: 16)
+        updatePlaybackTime(position: progress.doubleValue, duration: engine.snapshot.duration)
+        let center = transportWidth / 2
+        playButton.frame = NSRect(x: center - 18, y: 6, width: 36, height: 36)
+        backwardButton.frame = NSRect(x: center - 62, y: 8, width: 32, height: 32)
+        forwardButton.frame = NSRect(x: center + 30, y: 8, width: 32, height: 32)
+        previousVideoButton.frame = NSRect(x: center - 102, y: 8, width: 32, height: 32)
+        nextVideoButton.frame = NSRect(x: center + 70, y: 8, width: 32, height: 32)
+        previousVideoButton.isHidden = transportWidth < 950; nextVideoButton.isHidden = transportWidth < 950
+        speedButton.isHidden = transportWidth < 520
+        subtitleButton.isHidden = transportWidth < 420
+        panelButton.isHidden = transportWidth < 600
+        fullscreenButton.isHidden = transportWidth < 420
+        let trailingControls: [(NSButton, CGFloat)] = [(speedButton!, 40), (subtitleButton!, 32),
+            (panelButton!, 32), (moreButton!, 32), (fullscreenButton!, 32)].filter { !$0.0.isHidden }
+        let trailingWidth = trailingControls.reduce(CGFloat(0)) { $0 + $1.1 } + CGFloat(max(0, trailingControls.count - 1)) * 6
+        var trailingX = transportWidth - 20 - trailingWidth
+        for (button, width) in trailingControls {
+            button.frame = NSRect(x: trailingX, y: 8, width: width, height: 32)
+            trailingX += width + 6
+        }
         hud.frame = NSRect(x: videoRect.midX - 165, y: h - topHeight - 72, width: 330, height: 52)
         hudLabel.frame = NSRect(x: 12, y: 15, width: 306, height: 23)
         help.frame = NSRect(x: w - helpWidth, y: 0, width: helpWidth, height: h - topHeight)
         playlist.frame = NSRect(x: w - playlist.sidebarWidth, y: 0, width: playlist.sidebarWidth, height: h - topHeight)
         let panelWidth: CGFloat = playerWidth < 900 ? 306 : 318
         let aspect = engine.snapshot.videoDisplayAspect ?? (16.0 / 9.0)
-        let letterbox = aspect > 0 ? max(0, (videoRect.height - playerWidth / aspect) / 2) : 0
-        let subtitleBand = min(max(80, letterbox + 90), max(80, videoRect.height - 194))
-        let ph = max(180, min(454, videoRect.height - subtitleBand - 14))
-        panel.frame = NSRect(x: videoRect.maxX - panelWidth - 18, y: bottomHeight + subtitleBand, width: panelWidth, height: ph)
+        let letterbox = aspect > 0 ? max(0, (overlayRect.height - playerWidth / aspect) / 2) : 0
+        let subtitleBand = min(max(80, letterbox + 90), max(80, overlayRect.height - 194))
+        let ph = max(180, min(454, overlayRect.height - subtitleBand - 14))
+        panel.frame = NSRect(x: overlayRect.maxX - panelWidth - 18, y: overlayRect.minY + subtitleBand, width: panelWidth, height: ph)
         panelTitle.frame = NSRect(x: 18, y: ph - 39, width: panelWidth - 70, height: 20)
         panelCloseButton.frame = NSRect(x: panelWidth - 42, y: ph - 41, width: 27, height: 27)
         panelScroll.frame = NSRect(x: 11, y: 46, width: panelWidth - 22, height: max(1, ph - 99))
@@ -559,6 +579,17 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         }
     }
 
+    private func updatePlaybackTime(position: Double, duration: Double) {
+        let elapsed = clockText(position), total = clockText(duration)
+        let text = bottomBar.bounds.width < 500 ? elapsed : elapsed + " / " + total
+        if timeLabel.stringValue != text { timeLabel.stringValue = text }
+        let description = L10n.format("Playback time · %@ / %@", "播放时间 · %@ / %@", elapsed, total)
+        if timeLabel.toolTip != description {
+            timeLabel.toolTip = description
+            timeLabel.setAccessibilityLabel(description)
+        }
+    }
+
     private func update(_ state: EngineSnapshot) {
         let previous = lastPresentedState
         if previous?.videoDisplayAspect != state.videoDisplayAspect { layoutWindow() }
@@ -571,10 +602,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
             if progress.maxValue != maximum { progress.maxValue = maximum }
             if progress.doubleValue != displayPosition { progress.doubleValue = displayPosition }
         }
-        let time = clockText(displayPosition)
-        if timeLabel.stringValue != time { timeLabel.stringValue = time }
-        let remaining = "−" + clockText(max(0, state.duration - displayPosition))
-        if remainingTime.stringValue != remaining { remainingTime.stringValue = remaining }
+        updatePlaybackTime(position: displayPosition, duration: state.duration)
         if let currentURL, state.duration > 0 { playlist.updateDuration(state.duration, for: currentURL) }
         let shownVolume = globalVolume
         if volume.doubleValue != shownVolume { volume.doubleValue = shownVolume }
@@ -717,7 +745,6 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         let start = (entry != nil && entry!.position < entry!.duration - 2) ? entry!.position : 0
         errorBox.isHidden = true
         fileTitle.stringValue = url.deletingPathExtension().lastPathComponent
-        mediaMetadata.stringValue = url.pathExtension.uppercased() + L10n.text("  ·  Local video", "  ·  本地影片")
         mediaBadgeLabel.stringValue = url.deletingLastPathComponent().lastPathComponent == "Demo" ? L10n.text("DEMO FILM", "演示影片") : url.pathExtension.uppercased() + L10n.text(" · Local", " · 本地影片")
         window.title = "\(url.lastPathComponent) — LPlayer"
         window.representedURL = url
@@ -853,7 +880,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         case .privatePlayback: togglePrivate()
         case .customizeShortcuts: showShortcutEditor()
         case .zoom(let delta):
-            if fileReady { engine.setVideoZoomScale(engine.videoZoomScale + delta) }
+            adjustVideoZoom(by: delta)
         case .subtitleDelay(let delta):
             setSubtitleDelay((subtitleDelayTarget ?? engine.snapshot.subtitleDelay) + delta)
         case .cycleTrack(let type): cycleTrack(type, delta: 1)
@@ -1003,14 +1030,15 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
     private func updateVideoZoomPresentation() {
         guard surface != nil, engine != nil else { return }
         let visible = canTransformVideo && engine.videoZoomScale > 1.001
+        let zoomKeys = shortcutLabel(.zoomOut) + " / " + shortcutLabel(.zoomIn)
         let presentation = ZoomPresentation(visible: visible, scale: engine.videoZoomScale,
             videoFrame: engine.videoView.frame, surfaceSize: surface.bounds.size,
-            resetKey: shortcutLabel(.resetZoom), language: L10n.language, panning: isPanningVideo)
+            resetKey: shortcutLabel(.resetZoom), zoomKeys: zoomKeys, language: L10n.language, panning: isPanningVideo)
         guard presentation != zoomPresentation else { return }
         zoomPresentation = presentation
         videoZoomHint.isHidden = !visible
         if visible {
-            videoZoomHint.refresh(scale: engine.videoZoomScale, resetKey: shortcutLabel(.resetZoom))
+            videoZoomHint.refresh(scale: engine.videoZoomScale, resetKey: shortcutLabel(.resetZoom), zoomKeys: zoomKeys)
             let video = engine.videoView.frame
             let safeArea = NSRect(x: 0, y: Self.bottomBarHeight, width: surface.bounds.width,
                                   height: max(0, surface.bounds.height - Self.topBarHeight - Self.bottomBarHeight))
@@ -1056,6 +1084,18 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         isZooming = false
         if engine.videoZoomScale > 1.001 { engine.resetVideoZoom() }
         else { engine.setVideoZoomScale(2, at: engine.videoView.convert(event.locationInWindow, from: nil)) }
+    }
+
+    @objc private func zoomIn() { adjustVideoZoom(by: 0.25) }
+    @objc private func zoomOut() { adjustVideoZoom(by: -0.25) }
+
+    private func adjustVideoZoom(by delta: Double) {
+        guard fileReady, engine.snapshot.tracks.contains(where: { $0.type == "video" && $0.selected }) else { return }
+        isZooming = false
+        cancelVideoPan()
+        engine.setVideoZoomScale(engine.videoZoomScale + delta)
+        showHUD(L10n.format("Video zoom  %.0f%%", "画面缩放  %.0f%%", engine.videoZoomScale * 100))
+        writeDiagnostics()
     }
 
     @objc private func resetVideoZoom() {
@@ -1341,7 +1381,23 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         presentMenu(menu, from: brandMenuButton)
     }
     @objc private func showMoreMenu() {
+        presentMenu(makeMoreMenu(), from: moreButton)
+    }
+    private func makeMoreMenu() -> NSMenu {
         let menu = NSMenu()
+        if panelButton.isHidden {
+            addMenuItem(L10n.text("Quick Controls", "快捷面板"), to: menu, action: #selector(togglePanel))
+        }
+        if speedButton.isHidden {
+            addMenuItem(L10n.text("Playback Speed…", "播放速度…"), to: menu, action: #selector(showSpeedPanel))
+        }
+        if subtitleButton.isHidden {
+            addMenuItem(L10n.text("Show Subtitles", "显示字幕"), to: menu, action: #selector(toggleSubtitles), checked: engine.snapshot.subtitlesVisible)
+        }
+        if fullscreenButton.isHidden {
+            addMenuItem(L10n.text("Full Screen", "全屏"), to: menu, action: #selector(fullscreen))
+        }
+        if !menu.items.isEmpty { menu.addItem(.separator()) }
         addMenuItem(L10n.text("Settings…", "设置…"), to: menu, action: #selector(showSettings))
         addMenuItem(L10n.text("Keyboard Shortcuts", "快捷键"), to: menu, action: #selector(toggleHelp))
         menu.addItem(.separator())
@@ -1349,12 +1405,14 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         addMenuItem(L10n.text("Allow Folder Access…", "允许访问文件夹…"), to: menu, action: #selector(allowFolderAccess))
         menu.addItem(.separator())
         addMenuItem(L10n.text("Close Video", "关闭视频"), to: menu, action: #selector(closeMedia))
-        presentMenu(menu, from: moreButton)
+        return menu
     }
     @objc private func showFileInformation() {
         let menu = NSMenu()
-        for text in [currentURL?.lastPathComponent ?? L10n.text("No video open", "未打开视频"),
-                     currentURL == nil ? "LPlayer" : L10n.text("Duration", "时长") + "  " + clockText(engine.snapshot.duration)] {
+        var details = [currentURL?.lastPathComponent ?? L10n.text("No video open", "未打开视频"),
+                       currentURL == nil ? "LPlayer" : L10n.text("Duration", "时长") + "  " + clockText(engine.snapshot.duration)]
+        if let url = currentURL { details.append(url.pathExtension.uppercased() + L10n.text(" · Local video", " · 本地影片")) }
+        for text in details {
             let item = NSMenuItem(title: text, action: nil, keyEquivalent: ""); item.isEnabled = false; menu.addItem(item)
         }
         if currentURL != nil { menu.addItem(.separator()); addMenuItem(L10n.text("Show in Finder", "在 Finder 中显示"), to: menu, action: #selector(revealCurrentFile)) }
@@ -1517,7 +1575,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         var items = [QuickItem]()
         items.append(QuickItem(L10n.text("Playback speed", "播放速度"), L10n.format("%g× · ←/→ adjust · Space resets", "%g×  ·  左右调整，空格恢复 1×", state.speed), shortcut: speedKeys + " · " + speedReset, shortcutHelp: changeHint + L10n.text(" · Enter/Space reset to 1×. Outside this panel: ", " · 回车/空格恢复 1×。面板收起后：") + shortcutDescription(.speedDown) + " / " + shortcutDescription(.speedUp) + " · " + shortcutLabel(.resetSpeed), action: { [weak self] in self?.setSpeed(1) }, adjust: { [weak self] in guard let self else { return }; self.setSpeed((self.speedTarget ?? self.engine.snapshot.speed) + Double($0) * 0.1) }))
         items.append(QuickItem(L10n.text("Volume", "音量"), L10n.text("\(Int(state.volume))% · ←/→ adjust", "\(Int(state.volume))%  ·  左右调整"), shortcut: adjust, shortcutHelp: changeHint + L10n.text(" · Enter/Space mute. Outside this panel: ", " · 回车/空格静音。面板收起后：") + shortcutDescription(.volumeUp) + " / " + shortcutDescription(.volumeDown), action: { [weak self] in self?.toggleMute() }, adjust: { [weak self] in guard let self else { return }; self.setVolume(self.globalVolume + Double($0) * 5) }))
-        items.append(QuickItem(L10n.text("Video zoom", "画面缩放"), L10n.format("%.0f%% · ←/→ adjust · Space resets", "%.0f%% · 左右调整，空格复原", engine.videoZoomScale * 100), shortcut: adjust + " · " + zoomReset, shortcutHelp: L10n.text("Selected row: \(adjust) or ←/→ zoom · \(zoomReset) or Enter/Space fit to window", "选中此行：\(adjust) 或 ←/→ 缩放 · \(zoomReset) 或回车/空格复原"), action: { [weak self] in self?.resetVideoZoom() }, adjust: { [weak self] in guard let self, self.fileReady else { return }; self.engine.setVideoZoomScale(self.engine.videoZoomScale + Double($0) * 0.25) }))
+        items.append(QuickItem(L10n.text("Video zoom", "画面缩放"), L10n.format("%.0f%% · ←/→ adjust · Space resets", "%.0f%% · 左右调整，空格复原", engine.videoZoomScale * 100), shortcut: adjust + " · " + zoomReset, shortcutHelp: L10n.text("Selected row: \(adjust) or ←/→ zoom · \(zoomReset) or Enter/Space fit to window", "选中此行：\(adjust) 或 ←/→ 缩放 · \(zoomReset) 或回车/空格复原") + " · " + ShortcutAction.zoomOut.title + ": " + shortcutDescription(.zoomOut) + " · " + ShortcutAction.zoomIn.title + ": " + shortcutDescription(.zoomIn), action: { [weak self] in self?.resetVideoZoom() }, adjust: { [weak self] in self?.adjustVideoZoom(by: Double($0) * 0.25) }))
         items.append(QuickItem(L10n.text("Pan sensitivity", "拖动灵敏度"), L10n.format("%.0f%% · ←/→ adjust · Space resets", "%.0f%% · 左右调整，空格恢复", videoPanSensitivity * 100), shortcut: adjust + " · ↩ / Space", shortcutHelp: L10n.text("Selected row: \(adjust) or ←/→ adjust from 25% to 150% · Enter/Space reset to 100%. Lower values move the picture more slowly.", "选中此行：\(adjust) 或 ←/→ 调整 25%–150% · 回车/空格恢复 100%。数值越小，画面移动越慢。"), action: { [weak self] in self?.setVideoPanSensitivity(1) }, adjust: { [weak self] in guard let self else { return }; self.setVideoPanSensitivity(self.videoPanSensitivity + Double($0) * 0.25) }))
         items.append(QuickItem(L10n.text("Subtitles", "显示字幕"), state.subtitlesVisible ? L10n.text("On · Space to toggle", "已开启 · 空格切换") : L10n.text("Off · Space to toggle", "已关闭 · 空格切换"), shortcut: subtitleKey, shortcutHelp: L10n.text("Enter/Space toggle subtitles. Outside this panel: ", "回车/空格切换字幕。面板收起后：") + shortcutDescription(.subtitles), action: { [weak self] in self?.toggleSubtitles() }, adjust: { [weak self] _ in self?.toggleSubtitles() }))
         items.append(QuickItem(L10n.text("Subtitle timing", "字幕时间"), L10n.format("%+.1fs · ←/→ adjust by 0.1s", "%+.1f 秒 · 左右每次调整 0.1 秒", state.subtitleDelay), shortcut: adjust, shortcutHelp: L10n.text("Selected row: \(adjust) or ←/→ adjust by 0.1s · Enter/Space reset timing", "选中此行：\(adjust) 或 ←/→ 每次调整 0.1 秒 · 回车/空格复原"), action: { [weak self] in self?.setSubtitleDelay(0) }, adjust: { [weak self] in guard let self else { return }; self.setSubtitleDelay((self.subtitleDelayTarget ?? self.engine.snapshot.subtitleDelay) + Double($0) * 0.1) }))
@@ -1774,7 +1832,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
     private func updatePanelSelection() {
         for (i, row) in panelRows.enumerated() { row.selected = i == selectedItem }
         (panelSettingsButton as? ChromeButton)?.active = selectedItem == panelItems.count
-        panelSettingsButton?.contentTintColor = selectedItem == panelItems.count ? Palette.accent : Palette.muted
+        panelSettingsButton?.contentTintColor = selectedItem == panelItems.count ? Palette.accent : Palette.overlaySecondary
         if panelRows.indices.contains(selectedItem) { panelDocument.scrollToVisible(panelRows[selectedItem].frame) }
         writeDiagnostics()
     }
@@ -1801,6 +1859,13 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
             && panel.isHidden && help.isHidden && playlist.isHidden && !engine.snapshot.paused
             && errorBox.isHidden && !isZooming && !isPanningVideo && !window.inLiveResize
     }
+    private func updateSubtitleSafeArea() {
+        guard engine != nil, surface != nil else { return }
+        let controlsOverlayVideo = window.styleMask.contains(.fullScreen) && !bottomBar.isHidden && bottomBar.alphaValue > 0.01
+        let inset: CGFloat = 20 + (controlsOverlayVideo ? Self.bottomBarHeight : 0)
+        let margin = Int(ceil(720 * inset / max(1, engine.videoView.frame.height)))
+        if margin != subtitleMargin { subtitleMargin = margin; engine.setDouble("sub-margin-y", Double(margin)) }
+    }
     private func scheduleControlsHide(after delay: TimeInterval) {
         let timer = Timer(timeInterval: max(0.01, delay), repeats: false) { [weak self] _ in
             guard let self else { return }
@@ -1814,6 +1879,9 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
                 self.bottomBar.animator().alphaValue = 0
                 self.videoZoomHint.animator().alphaValue = 0
                 self.mediaBadge.animator().alphaValue = 0
+            } completionHandler: { [weak self] in
+                self?.updateSubtitleSafeArea()
+                self?.writeDiagnostics()
             }
         }
         controlsTimer = timer
@@ -1829,6 +1897,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         updateVideoZoomPresentation()
         if videoZoomHint.alphaValue < 1 { videoZoomHint.alphaValue = 1 }
         if mediaBadge.alphaValue < 1 { mediaBadge.alphaValue = 1 }
+        updateSubtitleSafeArea()
         if scheduleHide && canHideControls {
             controlsHideDeadline = ProcessInfo.processInfo.systemUptime + 2.8
             if controlsTimer == nil { scheduleControlsHide(after: 2.8) }
@@ -1865,8 +1934,11 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         playlist.setPreviewsEnabled(!playlist.isHidden)
         updatePlaylistPreviewPriority()
     }
-    func windowDidEnterFullScreen(_ notification: Notification) { observeTitlebarControls(); layoutWindow() }
-    func windowDidExitFullScreen(_ notification: Notification) { observeTitlebarControls(); layoutWindow() }
+    func window(_ window: NSWindow, willUseFullScreenPresentationOptions proposedOptions: NSApplication.PresentationOptions) -> NSApplication.PresentationOptions {
+        proposedOptions.union([.autoHideToolbar, .autoHideMenuBar])
+    }
+    func windowDidEnterFullScreen(_ notification: Notification) { observeTitlebarControls(); layoutWindow(); showControls(); writeDiagnostics() }
+    func windowDidExitFullScreen(_ notification: Notification) { observeTitlebarControls(); layoutWindow(); showControls(); writeDiagnostics() }
     func windowWillClose(_ notification: Notification) { saveProgress(); NSApp.terminate(nil) }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
     func applicationWillTerminate(_ notification: Notification) {
@@ -1975,6 +2047,8 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         playbackMenu.addItem(withTitle: L10n.text("Play / Pause", "暂停 / 继续"), action: #selector(togglePause), keyEquivalent: "")
         playbackMenu.addItem(withTitle: L10n.text("Previous Video", "上一个视频"), action: #selector(previousFile), keyEquivalent: "[")
         playbackMenu.addItem(withTitle: L10n.text("Next Video", "下一个视频"), action: #selector(nextFile), keyEquivalent: "]")
+        playbackMenu.addItem(withTitle: ShortcutAction.zoomOut.title, action: #selector(zoomOut), keyEquivalent: "")
+        playbackMenu.addItem(withTitle: ShortcutAction.zoomIn.title, action: #selector(zoomIn), keyEquivalent: "")
         playbackMenu.addItem(withTitle: L10n.text("Fit Video to Window", "画面恢复适应窗口"), action: #selector(resetVideoZoom), keyEquivalent: "0")
         playbackMenu.addItem(withTitle: L10n.text("Full Screen", "全屏"), action: #selector(fullscreen), keyEquivalent: "")
         playbackMenu.addItem(withTitle: L10n.text("Quick Controls", "快捷面板"), action: #selector(togglePanel), keyEquivalent: "")
@@ -2001,7 +2075,8 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         let actions: [Selector: ShortcutAction] = [
             #selector(togglePause): .playPause, #selector(chooseFiles): .openFiles,
             #selector(togglePrivate): .privatePlayback, #selector(previousFile): .previousFile,
-            #selector(nextFile): .nextFile, #selector(resetVideoZoom): .resetZoom,
+            #selector(nextFile): .nextFile, #selector(zoomOut): .zoomOut,
+            #selector(zoomIn): .zoomIn, #selector(resetVideoZoom): .resetZoom,
             #selector(fullscreen): .fullscreen, #selector(togglePanel): .panel,
             #selector(togglePlaylist): .playlist, #selector(toggleHelp): .help,
             #selector(showShortcutEditor): .customizeShortcuts
@@ -2040,6 +2115,13 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         values["playlistOpen"] = !playlist.isHidden
         values["playlistSelection"] = playlistSelection
         values["language"] = L10n.language.rawValue
+        values["surfaceFrame"] = NSStringFromRect(surface.bounds)
+        values["windowFrame"] = NSStringFromRect(window.frame)
+        values["screenFrame"] = window.screen.map { NSStringFromRect($0.frame) }
+        values["surfaceFrameInWindow"] = NSStringFromRect(surface.convert(surface.bounds, to: nil))
+        values["videoFrame"] = NSStringFromRect(engine.videoView.frame)
+        values["controlsAlpha"] = bottomBar.alphaValue
+        values["subtitleMargin"] = subtitleMargin
         values["directoryAccess"] = currentURL.map { fileAccess.hasDirectoryAccess(to: $0.deletingLastPathComponent()) } ?? false
         if let data = try? JSONSerialization.data(withJSONObject: values, options: [.prettyPrinted, .sortedKeys]) { try? data.write(to: url, options: .atomic) }
     }

@@ -9,6 +9,9 @@ final class LPlayerShortcutHelpView: SettingsFlippedView {
     var onOpenSettings: (() -> Void)?
     var shortcuts: ShortcutStore? { didSet { refreshLocalization() } }
     var hand: HandLayout = .left { didSet { if hand != oldValue { refreshLocalization() } } }
+    var overlaysVideo = false {
+        didSet { if overlaysVideo != oldValue { updateBackdrop() } }
+    }
     private let titleLabel = settingsLabel(size: 18, weight: .semibold)
     private let layoutLabel = settingsLabel(size: 11, color: SettingsPalette.secondary)
     private let closeButton = NSButton()
@@ -77,7 +80,17 @@ final class LPlayerShortcutHelpView: SettingsFlippedView {
         gestureGuide.refreshLocalization()
         document.addSubview(gestureHeading)
         document.addSubview(gestureGuide)
+        updateBackdrop()
         needsLayout = true
+    }
+
+    private func updateBackdrop() {
+        layer?.backgroundColor = (overlaysVideo ? Palette.panel : SettingsPalette.background).cgColor
+        let secondary = overlaysVideo ? Palette.overlaySecondary : SettingsPalette.secondary
+        layoutLabel.textColor = secondary
+        footerLabel.textColor = overlaysVideo ? Palette.overlaySecondary : SettingsPalette.tertiary
+        gestureHeading.textColor = secondary
+        groupViews.forEach { $0.heading.textColor = secondary }
     }
 
     override func layout() {

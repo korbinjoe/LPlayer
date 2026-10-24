@@ -2,8 +2,10 @@ import AppKit
 
 enum Palette {
     static let background = NSColor(srgbRed: 0.075, green: 0.079, blue: 0.087, alpha: 1)
-    // Apply translucency to the background only, keeping content crisp.
-    static let panel = NSColor(srgbRed: 0.135, green: 0.139, blue: 0.153, alpha: 0.97)
+    // Shared by every floating playback surface. Keep text and images solid;
+    // only the backdrop lets the picture through.
+    static let panel = NSColor(srgbRed: 0.135, green: 0.139, blue: 0.153, alpha: 0.72)
+    static let overlaySecondary = NSColor(srgbRed: 0.85, green: 0.855, blue: 0.88, alpha: 1)
     static let accent = NSColor(srgbRed: 0.039, green: 0.518, blue: 1, alpha: 1)
     static let muted = NSColor(srgbRed: 0.60, green: 0.605, blue: 0.64, alpha: 1)
     static let chrome = NSColor(srgbRed: 0.115, green: 0.119, blue: 0.131, alpha: 1)
@@ -27,8 +29,8 @@ private final class OverlayLabel: NSTextField {
     }
 }
 
-func label(_ text: String, size: CGFloat = 13, color: NSColor = .labelColor, weight: NSFont.Weight = .regular) -> NSTextField {
-    let field = NSTextField(labelWithString: text)
+func label(_ text: String, size: CGFloat = 13, color: NSColor = .labelColor, weight: NSFont.Weight = .regular, overVideo: Bool = false) -> NSTextField {
+    let field = overVideo ? OverlayLabel(labelWithString: text) : NSTextField(labelWithString: text)
     field.font = .systemFont(ofSize: size, weight: weight)
     field.textColor = color
     field.lineBreakMode = .byTruncatingMiddle
@@ -98,12 +100,13 @@ final class PlayerSurface: NSView {
 
 /// A small, passive affordance; gestures still reach the picture beneath it.
 final class VideoZoomHintView: NSView {
-    private let scaleLabel = label("", size: 11, color: .white, weight: .semibold)
-    private let movementLabel = label("", size: 11, color: .white)
-    private let resetLabel = label("", size: 11, color: Palette.muted)
+    private let scaleLabel = label("", size: 11, color: .white, weight: .semibold, overVideo: true)
+    private let movementLabel = label("", size: 11, color: .white, overVideo: true)
+    private let resetLabel = label("", size: 11, color: Palette.overlaySecondary, overVideo: true)
     private struct Presentation: Equatable {
         let scalePercent: Int
         let resetKey: String
+        let zoomKeys: String
         let language: AppLanguage
     }
     private var presentation: Presentation?
@@ -123,15 +126,15 @@ final class VideoZoomHintView: NSView {
     }
     required init?(coder: NSCoder) { fatalError() }
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
-    func refresh(scale: Double, resetKey: String) {
+    func refresh(scale: Double, resetKey: String, zoomKeys: String = "") {
         // Panning and mouse movement can refresh this presentation at trackpad
         // frequency. Reuse text metrics until its visible content changes.
         let percentage = scale.isFinite ? min(500, max(100, scale * 100)).rounded(.toNearestOrEven) : 100
-        let next = Presentation(scalePercent: Int(percentage), resetKey: resetKey, language: L10n.language)
+        let next = Presentation(scalePercent: Int(percentage), resetKey: resetKey, zoomKeys: zoomKeys, language: L10n.language)
         guard next != presentation else { return }
         presentation = next
         let values = [L10n.format("%.0f%%", "%.0f%%", percentage),
-                      L10n.text("Two-finger slide · Lift to stop", "双指滑动 · 松手即停"),
+                      (zoomKeys.isEmpty ? "" : L10n.text("\(zoomKeys) Zoom · ", "\(zoomKeys) 缩放 · ")) + L10n.text("Two-finger slide · Lift to stop", "双指滑动 · 松手即停"),
                       L10n.text("\(resetKey) Fit", "\(resetKey) 复原")]
         for (field, value) in zip([scaleLabel, movementLabel, resetLabel], values) where field.stringValue != value {
             field.stringValue = value
@@ -344,7 +347,7 @@ final class ThumbnailPreviewView: NSView {
             }
         } else {
             let text = state == .unavailable ? L10n.text("Preview unavailable", "此处暂无预览") : L10n.text("Loading preview…", "正在生成预览…")
-            let attributes: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: Palette.muted, .shadow: Palette.textShadow]
+            let attributes: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 11), .foregroundColor: Palette.overlaySecondary, .shadow: Palette.textShadow]
             let size = (text as NSString).size(withAttributes: attributes)
             (text as NSString).draw(at: NSPoint(x: imageRect.midX - size.width / 2, y: imageRect.midY - size.height / 2), withAttributes: attributes)
         }

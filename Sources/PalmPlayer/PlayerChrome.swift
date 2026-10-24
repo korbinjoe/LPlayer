@@ -1,6 +1,12 @@
 import AppKit
 
-final class PlayerTitlebarView: NSView {
+class PlayerChromeContainerView: NSView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        alphaValue <= 0.01 ? nil : super.hitTest(point)
+    }
+}
+
+final class PlayerTitlebarView: PlayerChromeContainerView {
     override var mouseDownCanMoveWindow: Bool { true }
     override func mouseDown(with event: NSEvent) {
         if event.clickCount == 2 { window?.performZoom(nil) }
@@ -13,6 +19,7 @@ final class ChromeButton: NSButton {
     enum Treatment { case plain, play, primary }
     var treatment: Treatment = .plain { didSet { needsDisplay = true } }
     var active = false { didSet { needsDisplay = true } }
+    var visualInset: CGFloat = 0 { didSet { needsDisplay = true } }
     private var hovered = false
     private var hoverArea: NSTrackingArea?
 
@@ -33,8 +40,9 @@ final class ChromeButton: NSButton {
         }
         if let color {
             color.setFill()
-            let radius = treatment == .play ? bounds.height / 2 : 6
-            NSBezierPath(roundedRect: bounds, xRadius: radius, yRadius: radius).fill()
+            let plate = bounds.insetBy(dx: visualInset, dy: visualInset)
+            let radius = treatment == .play ? plate.height / 2 : 6
+            NSBezierPath(roundedRect: plate, xRadius: radius, yRadius: radius).fill()
         }
         super.draw(dirtyRect)
     }
@@ -140,7 +148,7 @@ final class QuickAdjustmentRow: NSView {
         self.kind = kind
         super.init(frame: .zero)
         titleField.font = .systemFont(ofSize: 12); titleField.textColor = .white
-        valueField.font = .monospacedDigitSystemFont(ofSize: 10.5, weight: .regular); valueField.textColor = Palette.muted; valueField.alignment = .right
+        valueField.font = .monospacedDigitSystemFont(ofSize: 10.5, weight: .regular); valueField.textColor = Palette.overlaySecondary; valueField.alignment = .right
         addSubview(titleField)
         switch kind {
         case .popup:
@@ -167,7 +175,7 @@ final class QuickAdjustmentRow: NSView {
         case .button:
             actionButton.isBordered = false
             actionButton.font = .systemFont(ofSize: 11)
-            actionButton.contentTintColor = Palette.muted
+            actionButton.contentTintColor = Palette.overlaySecondary
             actionButton.target = self; actionButton.action = #selector(activateAction)
             addSubview(actionButton)
         }

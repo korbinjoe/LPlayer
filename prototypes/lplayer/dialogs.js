@@ -17,7 +17,8 @@
     return [
       { title: '播放与跳转', rows: [
         { label: '播放 / 暂停', keys: ['Space'], terms: '播放 暂停 空格 play pause' },
-        { label: '后退 / 前进', keys: left ? ['A', 'D'] : ['J', 'L'], terms: '后退 前进 跳转 seek' },
+        { label: '后退 / 前进 5 秒', keys: left ? ['A / ←', 'D / →'] : ['J / ←', 'L / →'], terms: '后退 前进 跳转 seek' },
+        { label: '后退 / 前进 30 秒', keys: left ? ['⇧ A / ⇧ ←', '⇧ D / ⇧ →'] : ['⇧ J / ⇧ ←', '⇧ L / ⇧ →'], terms: '后退 前进 跳转 Shift seek' },
         { label: '上一个 / 下一个视频', keys: left ? ['W / ↑', 'S / ↓'] : ['I / ↑', 'K / ↓'], terms: '上一 下一 切换 视频 方向键 previous next video' },
         { label: '恢复正常速度', keys: [left ? 'R' : 'P'], terms: '倍速 正常 复原 reset speed' }
       ] },
@@ -28,6 +29,7 @@
       { title: '画面与字幕', rows: [
         { label: '进入 / 退出全屏', keys: [left ? 'F' : 'H'], terms: '全屏 fullscreen' },
         { label: '显示 / 隐藏字幕', keys: [left ? 'G' : ';'], terms: '字幕 subtitle' },
+        { label: '放大 / 缩小画面', keys: ['= / +', '-'], terms: '画面 缩放 放大 缩小 25% zoom in out' },
         { label: '画面适应窗口', keys: ['0'], terms: '画面 缩放 复原 适应 zoom' }
       ] },
       { title: '文件与面板', rows: [
@@ -123,7 +125,7 @@
     return `<div class="lpdlg-page-intro lpdlg-page-intro-shortcuts"><h2>快捷键</h2><p>${state.hand === 'right' ? '右手' : '左手'}布局，熟悉的操作就在指尖。</p></div>
       <label class="lpdlg-search"><span class="lpdlg-search-symbol" aria-hidden="true"></span><input id="lpdlg-shortcut-search" type="search" placeholder="搜索快捷键" aria-label="搜索快捷键" value="${escapeHTML(dialogState.query)}" autocomplete="off" data-focus-key="shortcut-search"><span class="lpdlg-search-escape" aria-hidden="true">搜索</span></label>
       <div id="lpdlg-shortcut-results" aria-live="polite">${shortcutList(state, dialogState.query)}</div>
-      <p class="lpdlg-bottom-note">默认键位展示；自定义录制在原生 App 中使用，HTML 不模拟。列表可见时保持列表导航，Esc 收起。</p>`;
+      <p class="lpdlg-bottom-note">默认键位展示；自定义录制在原生 App 中使用，HTML 不模拟。列表中上下选择，左右跳转当前视频；Esc 收起。</p>`;
   }
 
   function settingsMarkup(state) {
@@ -140,11 +142,12 @@
 
   function helpMarkup(state) {
     const left = state.hand !== 'right';
-    const navigation = left ? 'W/S 选择 · A/D 调整' : 'I/K 选择 · J/L 调整';
+    const vertical = left ? 'W/S' : 'I/K';
+    const horizontal = left ? 'A/D' : 'J/L';
     const helpKeys = values => `<span class="lphelp-keys">${values.map(value => `<kbd>${escapeHTML(value)}</kbd>`).join('<span class="lphelp-key-separator">/</span>')}</span>`;
     const groups = shortcutGroups(state.hand).map(group => `<section class="lphelp-group"><h3>${group.title}</h3><div class="lphelp-rows">${group.rows.map(row => `<div class="lphelp-row"><span>${row.label}</span>${helpKeys(row.keys)}</div>`).join('')}</div></section>`).join('');
     return `<header class="lphelp-header"><h2>快捷键</h2><p>${left ? '左手' : '右手'}布局 · 边看边操作</p><button type="button" class="lphelp-close" aria-label="收起快捷键帮助" title="${left ? 'V' : 'Y'} / Esc 收起" data-lphelp-close><span class="icon" style="--icon:url('assets/icons/x.svg')" aria-hidden="true"></span></button></header>
-      <div class="lphelp-content">${groups}<p class="lphelp-caption">列表与快捷面板：${navigation}，Space / Enter 确认。列表内左右键不会跳转主视频。</p><p class="lphelp-caption">双指缩放、双指轻点与移动画面仅在原生 App 中实现；网页不模拟这些触控板手势。</p></div>
+      <div class="lphelp-content">${groups}<p class="lphelp-caption">列表：${vertical} / ↑↓ 选择，${horizontal} / ←→ 跳转当前播放视频 5 秒，Shift 跳转 30 秒；选择其他条目也不会改变跳转目标。快捷面板：${vertical} 选择，${horizontal} 调整。Space / Enter 确认。</p><p class="lphelp-caption">双指缩放、双指轻点与移动画面仅在原生 App 中实现；网页不模拟这些触控板手势。</p></div>
       <footer class="lphelp-footer"><button type="button" data-lphelp-settings>快捷键设置…</button><p>${left ? 'V' : 'Y'} / Esc 收起 · 播放快捷键仍可使用</p></footer>`;
   }
 

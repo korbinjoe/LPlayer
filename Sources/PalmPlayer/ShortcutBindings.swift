@@ -135,7 +135,7 @@ enum ShortcutContext { case playback, panel, playlist }
 final class ShortcutStore {
     // Keep the original preference key so existing installations can migrate.
     static let storageKey = "LPlayer.shortcuts.v1"
-    private static let configurationVersion = 2
+    private static let configurationVersion = 3
     var onChange: (() -> Void)?
     private let defaults: UserDefaults
     private struct StoredBinding: Codable, Equatable { var chord: KeyChord? }
@@ -162,6 +162,17 @@ final class ShortcutStore {
                 // effective layout (including disabled and borrowed keys).
                 for action in [ShortcutAction.previousFile, .nextFile, .volumeUp, .volumeDown] where decoded[action] == nil {
                     decoded[action] = StoredBinding(chord: Self.legacyBinding(for: action, hand: hand))
+                }
+            }
+            if config.version < 3 {
+                // A key that was free in v1/v2 may already belong to a custom
+                // action. Disable only the colliding inherited zoom default;
+                // keep the user's other edits and explicit disabled actions.
+                for action in [ShortcutAction.zoomIn, .zoomOut] where decoded[action] == nil {
+                    if let key = Self.defaultBinding(for: action, hand: hand),
+                       decoded.contains(where: { $0.key != action && $0.value.chord == key }) {
+                        decoded[action] = StoredBinding(chord: nil)
+                    }
                 }
             }
             overrides[hand] = decoded
@@ -210,6 +221,8 @@ final class ShortcutStore {
         case .speedDown: return KeyChord(left ? "q" : "u")
         case .speedUp: return KeyChord(left ? "e" : "o")
         case .resetSpeed: return KeyChord(left ? "r" : "p")
+        case .zoomIn: return KeyChord("=")
+        case .zoomOut: return KeyChord("-")
         case .resetZoom: return KeyChord("0")
         case .fullscreen: return KeyChord(left ? "f" : "h")
         case .subtitles: return KeyChord(left ? "g" : ";")
@@ -232,7 +245,9 @@ final class ShortcutStore {
         binding(for: action, hand: hand)?.display ?? aliases(for: action, hand: hand).first?.display ?? "—"
     }
 
-    func aliases(for action: ShortcutAction, hand: HandLayout) -> [KeyChord] { ShortcutDefaults.aliases(for: action, hand: hand) }
+    func aliases(for action: ShortcutAction, hand: HandLayout) -> [KeyChord] {
+        ShortcutDefaults.aliases(for: action, hand: hand) { self.binding(for: $0, hand: hand) }
+    }
 
     /// Errors never mutate the stored mapping. Standard app / system shortcuts
     /// and navigation remain available independently of the editable primary.
@@ -356,7 +371,18 @@ enum ShortcutDefaults {
     }()
 
     static func aliases(for action: ShortcutAction, hand: HandLayout) -> [KeyChord] {
-        aliasMaps[hand]?[action] ?? []
+        aliases(for: action, hand: hand) { ShortcutStore.defaultBinding(for: $0, hand: hand) }
+    }
+
+    static func aliases(for action: ShortcutAction, hand: HandLayout, binding: (ShortcutAction) -> KeyChord?) -> [KeyChord] {
+        let fixed = aliasMaps[hand]?[action] ?? []
+        guard action == .zoomIn else { return fixed }
+        // '+' is a convenience for the default '=' key, not an independent
+        // reserved shortcut. Honor remaps, disabled zoom, and older custom '+'.
+        let plus = KeyChord("+")
+        guard binding(.zoomIn) == KeyChord("="),
+              !ShortcutAction.allCases.contains(where: { $0 != .zoomIn && binding($0) == plus }) else { return fixed }
+        return fixed + [plus]
     }
 
     private static func makeAliases(for action: ShortcutAction, hand: HandLayout) -> [KeyChord] {
@@ -383,7 +409,7 @@ enum ShortcutDefaults {
     static func command(for chord: KeyChord, hand: HandLayout, context: ShortcutContext, binding: (ShortcutAction) -> KeyChord?) -> PlayerCommand? {
         if let navigation = navigationCommand(for: chord, hand: hand, context: context) { return navigation }
         for action in ShortcutAction.allCases {
-            if aliases(for: action, hand: hand).contains(chord) || binding(action) == chord { return action.command }
+            if aliases(for: action, hand: hand, binding: binding).contains(chord) || binding(action) == chord { return action.command }
         }
         return nil
     }
@@ -398,7 +424,8 @@ enum ShortcutDefaults {
             if context == .playlist {
                 if key == up || key == "\u{f700}" { return .playlistMove(-1) }
                 if key == down || key == "\u{f701}" { return .playlistMove(1) }
-                if [back, forward, "\u{f702}", "\u{f703}"].contains(key) { return .playlistMove(0) }
+                // Horizontal keys keep their current playback bindings. Only
+                // vertical navigation and confirmation belong to the list.
                 if key == " " || key == "\r" { return .playlistActivate }
                 if key == "\u{f729}" { return .playlistBoundary(false) }
                 if key == "\u{f72b}" { return .playlistBoundary(true) }

@@ -61,6 +61,7 @@ Voici les configurations par défaut actuelles. Les configurations déjà person
 | Plein écran | `F` | `H` |
 | Afficher / masquer les sous-titres | `G` | `;` |
 | Annuler le déplacement dans la lecture | `Z` | `M` |
+| Agrandir / réduire l’image | `=` / `-` | `=` / `-` |
 | Adapter la vidéo à la fenêtre | `0` | `0` |
 
 `W/A/S/D` et `I/J/K/L` correspondent à `↑/←/↓/→`. Leur comportement dépend du mode visible :
@@ -68,10 +69,10 @@ Voici les configurations par défaut actuelles. Les configurations déjà person
 | Mode | Haut / bas | Gauche / droite | Space / Enter |
 | --- | --- | --- | --- |
 | Lecture | Vidéo précédente / suivante | Se déplacer de 5 secondes | Space lance la lecture / met en pause |
-| Liste de lecture | Sélectionner et afficher un aperçu muet | Ne pas modifier la vidéo principale | Lire l'élément sélectionné |
+| Liste de lecture | Sélectionner et afficher un aperçu muet | Se déplacer de 5 secondes dans la vidéo en cours | Lire l'élément sélectionné |
 | Commandes rapides | Sélectionner une commande | Modifier sa valeur | Activer ou réinitialiser la commande |
 
-Pendant la lecture, `Shift+↑/↓` règle le volume et `Shift+←/→` déplace la lecture de 30 secondes, comme les lettres correspondantes. Dans la liste de lecture et les commandes rapides, Shift associé à une direction reste lié au mode visible. Maintenir une touche de changement de vidéo enfoncée ne fait pas sauter plusieurs vidéos.
+Pendant la lecture, `Shift+↑/↓` règle le volume et `Shift+←/→` déplace la lecture de 30 secondes, comme les lettres correspondantes. Dans la liste de lecture, seules les directions verticales sont réservées à la sélection ; les touches horizontales déplacent la lecture de la vidéo en cours, même si une autre ligne est sélectionnée. Avec Shift, le déplacement est de 30 secondes ; maintenir une touche de déplacement répète l’action. Les commandes rapides conservent toutes les directions, y compris avec Shift, pour naviguer et régler les valeurs. Maintenir une touche de changement de vidéo enfoncée ne fait pas sauter plusieurs vidéos.
 
 Autres raccourcis :
 
@@ -110,6 +111,8 @@ La lecture privée enregistre la progression normale avant son activation, puis 
 ## Trackpad et aperçus
 
 Pincez au-dessus de la vidéo pour zoomer autour du pointeur. Lorsque l'image est agrandie, faites glisser deux doigts sans appuyer sur le trackpad pour la déplacer ; le mouvement suit les doigts et s'arrête lorsque vous les retirez. La sensibilité est réglable de 25 % à 150 %, avec une valeur par défaut de 100 %. L'image reste dans ses limites, et tout changement de vidéo réinitialise le zoom et le déplacement.
+
+Appuyez sur `=` (ou `+`) pour agrandir et sur `-` pour réduire, par pas de 25 points de pourcentage, entre 100 % et 500 %. Maintenez la touche pour ajuster en continu. Ces touches par défaut sont communes aux deux mains et peuvent être personnalisées dans les réglages.
 
 Touchez deux fois le trackpad avec deux doigts pour alterner entre un zoom 2× et l'adaptation à la fenêtre, ou appuyez sur `0` / `⌘0` pour réinitialiser l'affichage. Les gestes qui commencent au-dessus de la liste de lecture, des commandes ou de la barre latérale d'aide conservent l'interaction propre à cette zone.
 

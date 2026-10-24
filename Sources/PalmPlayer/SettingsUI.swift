@@ -1,6 +1,6 @@
 import AppKit
 
-/// Opaque surfaces keep settings readable independently of the video behind it.
+/// Solid cards and controls stay readable above the translucent sheet backdrop.
 enum SettingsPalette {
     static let background = NSColor(srgbRed: 0.149, green: 0.149, blue: 0.161, alpha: 1)
     static let sidebar = NSColor(srgbRed: 0.125, green: 0.125, blue: 0.137, alpha: 1)

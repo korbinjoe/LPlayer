@@ -16,6 +16,7 @@ final class PlaylistView: NSView, NSTableViewDataSource, NSTableViewDelegate {
     var onHelpRequested: (() -> Void)?
     var authorizePreviewURL: ((URL) -> URL?)?
     var closeShortcut: String? { didSet { updateFooter() } }
+    var overlaysVideo = false { didSet { if overlaysVideo != oldValue { updateBackground() } } }
 
     private let titleLabel = playlistLabel(size: 15, weight: .semibold)
     private let countLabel = playlistLabel(size: 10.5, color: .secondaryLabelColor)
@@ -26,6 +27,7 @@ final class PlaylistView: NSView, NSTableViewDataSource, NSTableViewDelegate {
     private let scrollView = NSScrollView()
     private let tableView = NSTableView()
     private let movementLabel = playlistLabel(size: 10, color: .secondaryLabelColor)
+    private let closeHintLabel = playlistLabel(size: 10, color: .secondaryLabelColor)
     private let helpButton = NSButton()
     private let emptyTitle = playlistLabel(size: 13, weight: .medium)
     private let emptyHint = playlistLabel(size: 11, color: .secondaryLabelColor)
@@ -114,6 +116,9 @@ final class PlaylistView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         scrollView.documentView = tableView
         scrollView.contentView.postsBoundsChangedNotifications = true
         NotificationCenter.default.addObserver(self, selector: #selector(visibleRowsChanged), name: NSView.boundsDidChangeNotification, object: scrollView.contentView)
+        for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification] {
+            NotificationCenter.default.addObserver(self, selector: #selector(windowKeyChanged(_:)), name: name, object: nil)
+        }
         thumbnails.onUpdate = { [weak self] url, image in
             self?.updateVisibleThumbnail(url: url, image: image)
         }
@@ -126,7 +131,7 @@ final class PlaylistView: NSView, NSTableViewDataSource, NSTableViewDelegate {
 
         emptyTitle.alignment = .center
         emptyHint.alignment = .center
-        [titleLabel, countLabel, viewControl, folderIcon, folderLabel, addButton, scrollView, movementLabel, helpButton, emptyTitle, emptyHint].forEach(addSubview)
+        [titleLabel, countLabel, viewControl, folderIcon, folderLabel, addButton, scrollView, movementLabel, closeHintLabel, helpButton, emptyTitle, emptyHint].forEach(addSubview)
         refreshLocalization()
     }
     required init?(coder: NSCoder) { fatalError() }
@@ -141,7 +146,12 @@ final class PlaylistView: NSView, NSTableViewDataSource, NSTableViewDelegate {
 
     private func updateBackground() {
         effectiveAppearance.performAsCurrentDrawingAppearance {
-            layer?.backgroundColor = PlaylistStyle.background.cgColor
+            layer?.backgroundColor = (overlaysVideo ? Palette.panel : PlaylistStyle.background).cgColor
+            let secondary = overlaysVideo ? Palette.overlaySecondary : NSColor.secondaryLabelColor
+            [countLabel, folderLabel, movementLabel, closeHintLabel].forEach { $0.textColor = secondary }
+            folderIcon.contentTintColor = secondary
+            addButton.contentTintColor = secondary
+            helpButton.contentTintColor = secondary
         }
     }
 
@@ -323,8 +333,9 @@ final class PlaylistView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         if abs(tableView.rowHeight - rowHeight) > 0.5 {
             tableView.rowHeight = rowHeight
         }
-        movementLabel.frame = NSRect(x: 16, y: 21, width: max(0, bounds.width - 106), height: 16)
-        helpButton.frame = NSRect(x: bounds.width - 83, y: 17, width: 70, height: 24)
+        movementLabel.frame = NSRect(x: 16, y: 33, width: max(0, bounds.width - 32), height: 14)
+        closeHintLabel.frame = NSRect(x: 16, y: 11, width: max(0, bounds.width - 110), height: 16)
+        helpButton.frame = NSRect(x: bounds.width - 83, y: 7, width: 70, height: 24)
         emptyTitle.frame = NSRect(x: 20, y: bounds.midY - 2, width: max(0, bounds.width - 40), height: 20)
         emptyHint.frame = NSRect(x: 20, y: bounds.midY - 25, width: max(0, bounds.width - 40), height: 18)
         if scrollAfterLayout, urls.indices.contains(selectedIndex) {
@@ -380,7 +391,22 @@ final class PlaylistView: NSView, NSTableViewDataSource, NSTableViewDelegate {
     @objc private func openFiles() { onOpenRequested?() }
     @objc private func showHelp() { onHelpRequested?() }
 
-    @objc private func visibleRowsChanged() { refreshVisiblePreviews() }
+    @objc private func visibleRowsChanged() {
+        refreshVisibleHoverStates()
+        refreshVisiblePreviews()
+    }
+
+    @objc private func windowKeyChanged(_ notification: Notification) {
+        guard let changedWindow = notification.object as? NSWindow, changedWindow === window else { return }
+        refreshVisibleHoverStates()
+    }
+
+    private func refreshVisibleHoverStates() {
+        guard let rows = visibleRows() else { return }
+        for row in rows {
+            (tableView.view(atColumn: 0, row: row, makeIfNecessary: false) as? PlaylistRowButton)?.refreshHoverState()
+        }
+    }
 
     private func visibleRows() -> Range<Int>? {
         let range = tableView.rows(in: tableView.visibleRect)
@@ -494,7 +520,10 @@ final class PlaylistView: NSView, NSTableViewDataSource, NSTableViewDelegate {
         let key = closeShortcut ?? hand.playlistKey
         let navigation = hand == .left ? "W/S" : "I/K"
         movementLabel.stringValue = L10n.format("%@ / ↑↓ Select · ↵ Play", "%@ / ↑↓ 选择 · ↵ 播放", navigation)
-        movementLabel.toolTip = L10n.format("%@ or ↑↓ select and preview silently · Click, Enter or Space to play · %@ / Esc close", "%@ 或 ↑↓ 选择并静音预览 · 单击、回车或空格播放 · %@ / Esc 收起", navigation, key)
+        closeHintLabel.stringValue = L10n.format("%@ / Esc Close", "%@ / Esc 收起", key)
+        closeHintLabel.toolTip = closeHintLabel.stringValue
+        closeHintLabel.setAccessibilityLabel(closeHintLabel.stringValue)
+        movementLabel.toolTip = L10n.format("%@ or ↑↓ select and preview silently · ←→ seek the current video, Shift for 30 seconds · Click, Enter or Space to play · %@ / Esc close", "%@ 或 ↑↓ 选择并静音预览 · ←→ 快退/快进当前视频，Shift 为 30 秒 · 单击、回车或空格播放 · %@ / Esc 收起", navigation, key)
         movementLabel.setAccessibilityLabel(movementLabel.toolTip)
     }
 }
@@ -546,6 +575,7 @@ private final class PlaylistRowButton: NSButton {
         playButton.image = NSImage(systemSymbolName: "play.circle.fill", accessibilityDescription: nil)
         playButton.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 22, weight: .regular)
         playButton.isBordered = false
+        playButton.isHidden = true
         playButton.contentTintColor = .systemBlue
         playButton.target = self
         playButton.action = #selector(activateVideo)
@@ -558,6 +588,8 @@ private final class PlaylistRowButton: NSButton {
     required init?(coder: NSCoder) { fatalError() }
 
     func configure(url: URL, index: Int, current: Bool, selected: Bool, preview: NSImage?, duration: Double?, style: PlaylistView.ViewStyle) {
+        // Recycled rows may never receive an exit for their previous position.
+        hovered = false
         rowIndex = index
         representedURL = url
         self.current = current
@@ -574,8 +606,8 @@ private final class PlaylistRowButton: NSButton {
         setDuration(duration)
         setAccessibilityLabel(L10n.format("%ld, %@", "%ld，%@", index + 1, url.lastPathComponent) + (current ? L10n.text(", current video", "，当前视频") : ""))
         updatePreviewStatus()
-        setAccessibilityHelp(L10n.text("Click or press Enter / Space to play. Use the playlist navigation keys to select and preview silently.", "单击、回车或空格播放；使用列表导航键选择并静音预览。") + " " + url.path)
-        updatePlayButton()
+        setAccessibilityHelp(L10n.text("Click or press Enter / Space to play. Use the vertical playlist navigation keys to select and preview silently. Left / Right seek the current video; hold Shift for 30 seconds.", "单击、回车或空格播放；使用列表上下导航键选择并静音预览。左右方向键快退/快进当前视频，按住 Shift 为 30 秒。") + " " + url.path)
+        refreshHoverState()
         needsLayout = true
         needsDisplay = true
     }
@@ -636,9 +668,27 @@ private final class PlaylistRowButton: NSButton {
         if let tracking { removeTrackingArea(tracking) }
         tracking = NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect], owner: self)
         addTrackingArea(tracking!)
+        refreshHoverState()
     }
-    override func mouseEntered(with event: NSEvent) { hovered = true; updatePlayButton(); needsDisplay = true }
-    override func mouseExited(with event: NSEvent) { hovered = false; updatePlayButton(); needsDisplay = true }
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        refreshHoverState()
+    }
+    override func mouseEntered(with event: NSEvent) { refreshHoverState() }
+    override func mouseExited(with event: NSEvent) { refreshHoverState() }
+
+    func refreshHoverState() {
+        let isUnderPointer: Bool
+        if let window, window.isKeyWindow, !isHiddenOrHasHiddenAncestor {
+            let point = convert(window.mouseLocationOutsideOfEventStream, from: nil)
+            isUnderPointer = bounds.contains(point) && visibleRect.contains(point)
+        } else {
+            isUnderPointer = false
+        }
+        if hovered != isUnderPointer { needsDisplay = true }
+        hovered = isUnderPointer
+        updatePlayButton()
+    }
 
     private func updatePlayButton() {
         playButton.isHidden = !hovered && !(selected && !current)
@@ -660,6 +710,7 @@ private final class PlaylistRowButton: NSButton {
         detailLabel.frame = NSRect(x: detailX, y: detailY, width: max(0, durationLabel.frame.minX - detailX - 6), height: 14)
         playingIcon.frame = NSRect(x: textX, y: detailY + 2, width: 9, height: 10)
         playButton.frame = NSRect(x: previewView.frame.maxX - 27, y: previewView.frame.maxY - 27, width: 24, height: 24)
+        refreshHoverState()
     }
 
     override func draw(_ dirtyRect: NSRect) {

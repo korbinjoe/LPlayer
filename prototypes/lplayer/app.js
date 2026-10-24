@@ -25,10 +25,30 @@ const esc = text => String(text).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 const fmt = n => { n = Math.max(0,Math.floor(n || 0)); return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`; };
 const helpOpen = () => Boolean(window.LPlayerDialogs?.isHelpOpen?.());
 const quickRows = () => [...$('quick-panel').querySelectorAll('[data-qrow]')];
+const menuButtons = el => [...el.querySelectorAll('button:not(:disabled)')].filter(button=>!button.hidden);
 const keysForHand = () => s.hand === 'right' ? {up:'i',down:'k',back:'j',forward:'l',slower:'u',faster:'o',normal:'p',previous:'i',next:'k',panel:',',list:"'",help:'y',full:'h',subtitle:';',undo:'m'} : {up:'w',down:'s',back:'a',forward:'d',slower:'q',faster:'e',normal:'r',previous:'w',next:'s',panel:'c',list:'t',help:'v',full:'f',subtitle:'g',undo:'z'};
 function hydrate(){ document.querySelectorAll('[data-icon]').forEach(el=>{el.style.setProperty('--icon',`url('assets/icons/${el.dataset.icon}.svg')`);el.setAttribute('aria-hidden','true');}); }
 function changeIcon(button,name){ button.querySelector('.icon').style.setProperty('--icon',`url('assets/icons/${name}.svg')`); }
 function fill(input){ const max = +input.max || 100, min = +input.min || 0; input.style.setProperty('--fill',`${100*(+input.value-min)/(max-min)}%`); }
+function syncFullscreenTransport(){
+  const sidebar=[s.playlist?$('playlist'):null,helpOpen()?$('lp-help-rail'):null].find(el=>el&&!el.hidden&&getComputedStyle(el).display!=='none');
+  const width=document.fullscreenElement===app&&sidebar?sidebar.getBoundingClientRect().width:0;
+  app.style.setProperty('--fullscreen-sidebar-width',`${width}px`);
+  syncTransportLayout();
+}
+function syncTransportLayout(){
+  const width=$('transport').getBoundingClientRect().width;
+  $('previous').hidden=$('next').hidden=width<950;
+  $('quick-toggle').hidden=width<600;
+  $('speed-button').hidden=width<520;
+  $('volume').hidden=width<700;
+  $('transport').classList.toggle('compact-volume',width<700);
+  $('current-time').classList.toggle('current-only',width<500);
+  $('captions-button').hidden=$('fullscreen').hidden=width<420;
+  $('quick-menu').hidden=width>=600;
+  $('speed-control-menu').hidden=width>=520;
+  $('fullscreen-menu').hidden=width>=420;
+}
 function toast(text){ $('toast').textContent=text;$('toast').classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),2100); }
 function hud(text){ $('hud').textContent=text;$('hud').classList.add('visible');clearTimeout(hudTimer);hudTimer=setTimeout(()=>$('hud').classList.remove('visible'),1100); }
 function save(){ const prefs={};Object.keys(defaults).forEach(k=>prefs[k]=s[k]);try{localStorage.setItem('lplayer-visual-preferences',JSON.stringify(prefs));}catch{} }
@@ -38,7 +58,7 @@ function setPreference(key,value){
   if(key==='volume')return volume(Number(value),false);
   s[key]=value;apply();if(key==='previews')queue();save();
 }
-window.LPlayerUI = {getState:()=>({...s}),setPreference,toast,openSettings:settings,onHelpChange:hideLater,prepareHelp:()=>{closeMenus();closeQuick();playlist(false);}};
+window.LPlayerUI = {getState:()=>({...s}),setPreference,toast,openSettings:settings,onHelpChange:()=>{syncFullscreenTransport();hideLater();},prepareHelp:()=>{closeMenus();closeQuick();playlist(false);}};
 function syncSpeedSelect(select){
   const options = [...speeds];
   if(!options.some(n=>Math.abs(n-s.speed)<.001))options.push(s.speed);
@@ -58,13 +78,17 @@ function apply(){
   $('speed-button').title=`播放速度 · 打开快捷面板首行 · ${pair(k.slower,k.faster)} 调整`;
   $('speed-menu').querySelector('.menu-hint').textContent=`${pair(k.slower,k.faster)} 调节 · ${k.normal.toUpperCase()} 恢复`;
   $('volume').title=`音量 · Shift+${pair(k.up,k.down)} / Shift+↑↓ 增大 / 减小`;
+  $('quick-zoom').title='画面缩放 · = / + 放大，- 缩小 · 每次 25% · 0 / ⌘0 复原';
+  $('reset-zoom').title='画面适应窗口 · 0 / ⌘0';
   $('captions-button').title=`显示 / 隐藏字幕 · ${k.subtitle.toUpperCase()}`;$('captions-button').setAttribute('aria-label',s.subtitles?'隐藏字幕':'显示字幕');
   $('help-button').title=`快捷键帮助 · ${k.help.toUpperCase()}`;
   document.querySelectorAll('[data-help-shortcut]').forEach(el=>el.textContent=k.help.toUpperCase());
+  document.querySelectorAll('[data-panel-shortcut]').forEach(el=>el.textContent=k.panel.toUpperCase());
   $('quick-keyhint').innerHTML=`<kbd>${pair(k.up,k.down)}</kbd> 选择 <kbd>${pair(k.back,k.forward)}</kbd> 调整`;
   $('quick-keyhint').title=`${pair(k.up,k.down)} 或 ↑↓ 选择，${pair(k.back,k.forward)} 或 ←→ 调整，Space / Enter 确认，Esc 收起`;
-  $('playlist-keyhint').innerHTML=`<kbd>${pair(k.up,k.down)}</kbd> 选择 <kbd>↵</kbd> 播放`;
-  $('playlist-keyhint').title=`${pair(k.up,k.down)} 或 ↑↓ 选择并静音预览；Space / Enter 确认；鼠标单击直接播放；Home / End 首尾；Esc 收起`;
+  $('playlist-keyhint').innerHTML=`<kbd>${pair(k.up,k.down)}</kbd> / ↑↓ 选择 · <kbd>↵</kbd> 播放`;
+  $('playlist-close-hint').innerHTML=`<kbd>${k.list.toUpperCase()}</kbd> / <kbd>Esc</kbd> 收起`;
+  $('playlist-keyhint').title=`${pair(k.up,k.down)} 或 ↑↓ 选择并静音预览；${pair(k.back,k.forward)} 或 ←→ 跳转当前视频 5 秒，Shift 跳转 30 秒；Space / Enter 确认；鼠标单击直接播放；Home / End 首尾；${k.list.toUpperCase()} / Esc 收起`;
   $('privacy-badge').hidden=!s.private;$('private-menu').setAttribute('aria-checked',String(s.private));$('quick-private').checked=s.private;
   $('quick-subtitles').checked=s.subtitles;$('captions-button').classList.toggle('active',s.subtitles);$('captions-button').setAttribute('aria-pressed',String(s.subtitles));
   video.volume=s.volume/100;video.muted=s.volume===0;video.playbackRate=s.speed;
@@ -85,7 +109,7 @@ function zoom(n){if(!Number.isFinite(n))return;s.zoom=Math.max(100,Math.min(500,
 function updateSub(){const list=subs[s.track]?.[Math.min(s.current,2)]||subs.zh[0];$('subtitle').hidden=!s.loaded||!s.subtitles||Boolean(items[s.current]?.local);$('subtitle').firstElementChild.textContent=list[Math.floor(Math.max(0,(video.currentTime||0)-s.delay)/9)%list.length];}
 function subtitles(value){s.subtitles=value;apply();save();hud(value?'字幕已开启':'字幕已关闭');}
 function delay(n){s.delay=Math.round((s.delay+n)*10)/10;$('delay-value').textContent=`${s.delay>0?'+':''}${s.delay.toFixed(1)} s`;updateSub();}
-function updateTime(){if(!s.loaded)return;const d=Number.isFinite(video.duration)?video.duration:items[s.current].duration;$('seek').max=d;$('seek').value=video.currentTime||0;fill($('seek'));$('current-time').textContent=fmt(video.currentTime);$('remaining-time').textContent='−'+fmt(d-video.currentTime);$('seek').setAttribute('aria-valuetext',`${fmt(video.currentTime)}，共 ${fmt(d)}`);updateSub();}
+function updateTime(){if(!s.loaded)return;const d=Number.isFinite(video.duration)?video.duration:items[s.current].duration;$('seek').max=d;$('seek').value=video.currentTime||0;fill($('seek'));$('current-time').innerHTML=`<span class="time-current">${fmt(video.currentTime)}</span><span class="time-total"> / ${fmt(d)}</span>`;$('current-time').setAttribute('aria-label',`${fmt(video.currentTime)}，共 ${fmt(d)}`);$('seek').setAttribute('aria-valuetext',`${fmt(video.currentTime)}，共 ${fmt(d)}`);updateSub();}
 function hideLater(){clearTimeout(hideTimer);app.classList.remove('hide-chrome');if(document.fullscreenElement===app&&!video.paused&&!menu&&$('quick-panel').hidden&&!helpOpen()&&!s.playlist&&!window.LPlayerDialogs?.isOpen())hideTimer=setTimeout(()=>app.classList.add('hide-chrome'),2800);}
 function updatePlay(){const playing=s.loaded&&!video.paused;changeIcon($('play'),playing?'pause-fill':'play-fill');$('play').classList.toggle('is-playing',playing);$('play').setAttribute('aria-label',playing?'暂停':'播放');$('play').title=playing?'暂停 · Space':'播放 · Space';stage.classList.toggle('playing',playing);hideLater();}
 async function startPlayback(){try{await video.play();}catch(error){if(error?.name!=='AbortError')toast('当前浏览器无法播放此文件，请尝试 MP4 或 WebM。');}updatePlay();}
@@ -103,7 +127,7 @@ function load(i,autoplay=true){
   video.pause();s.current=i;s.selected=i;s.loaded=true;pendingStart=item.start||0;seekBefore=null;
   video.src=item.src;video.poster=item.image;video.dataset.playAfterLoad=String(autoplay);video.load();
   $('file-title').textContent=item.title;$('info-name').textContent=item.name;$('info-details').textContent=item.local?'正在读取视频信息':`1280 × 720 · 25 fps · ${fmt(item.duration)}`;$('scene-pill').textContent=item.local?'本地影片':`短片 · ${item.title.split(' · ')[0]}`;$('seek-preview').querySelector('img').src=item.image;
-  app.classList.remove('empty');$('empty-state').hidden=true;zoom(100);queue();updatePlay();closeMenus();apply();$('media-meta').innerHTML=item.local?'本地影片':'720p <span class="meta-dot">·</span> 本地影片';stage.focus({preventScroll:true});
+  app.classList.remove('empty');$('empty-state').hidden=true;zoom(100);queue();updatePlay();closeMenus();apply();stage.focus({preventScroll:true});
 }
 function activate(i=s.selected){
   if(!items[i])return;
@@ -119,10 +143,10 @@ function playlist(value=!s.playlist){
   const opening=value&&!s.playlist;s.playlist=value;$('playlist').hidden=!value;
   $('playlist-toggle').setAttribute('aria-label',value?'收起播放列表':'打开播放列表');$('playlist-toggle').setAttribute('aria-pressed',String(value));$('playlist-toggle').classList.toggle('active',value);
   if(opening)select(s.current,true);else if(!value){queue();if($('playlist').contains(document.activeElement))stage.focus({preventScroll:true});}
-  hideLater();
+  syncFullscreenTransport();hideLater();
 }
 function closeMenus(restore=false){if(menu){menu.hidden=true;anchor?.setAttribute('aria-expanded','false');if(restore)anchor?.focus({preventScroll:true});}menu=null;anchor=null;hideLater();}
-function showMenu(el,button){if(menu===el)return closeMenus();closeMenus();menu=el;anchor=button;el.hidden=false;button.setAttribute('aria-expanded','true');const r=button.getBoundingClientRect(),m=el.getBoundingClientRect();let x=r.right-m.width,y=r.top-m.height-9;if(r.top<100){x=r.left;y=r.bottom+8;}el.style.left=`${Math.max(8,Math.min(innerWidth-m.width-8,x))}px`;el.style.top=`${Math.max(8,Math.min(innerHeight-m.height-8,y))}px`;el.querySelector('button:not(:disabled)')?.focus({preventScroll:true});hideLater();}
+function showMenu(el,button){if(menu===el)return closeMenus();closeMenus();menu=el;anchor=button;el.hidden=false;button.setAttribute('aria-expanded','true');const r=button.getBoundingClientRect(),m=el.getBoundingClientRect();let x=r.right-m.width,y=r.top-m.height-9;if(r.top<100){x=r.left;y=r.bottom+8;}el.style.left=`${Math.max(8,Math.min(innerWidth-m.width-8,x))}px`;el.style.top=`${Math.max(8,Math.min(innerHeight-m.height-8,y))}px`;menuButtons(el)[0]?.focus({preventScroll:true});hideLater();}
 function closeQuick(){if($('quick-panel').contains(document.activeElement))stage.focus({preventScroll:true});$('quick-panel').hidden=true;stage.classList.remove('quick-open');$('quick-toggle').classList.remove('active');$('quick-toggle').setAttribute('aria-expanded','false');$('speed-button').setAttribute('aria-expanded','false');hideLater();}
 function markQuick(i){const rows=quickRows();if(!rows.length)return;qIndex=(i+rows.length)%rows.length;rows.forEach((row,index)=>{row.classList.toggle('focused',index===qIndex);row.setAttribute('aria-current',String(index===qIndex));});}
 function focusQuick(i){markQuick(i);const row=quickRows()[qIndex];row?.focus({preventScroll:true});if(row?.closest('.quick-scroll'))row.scrollIntoView({block:'nearest',behavior:'instant'});}
@@ -156,7 +180,8 @@ $('file-input').onchange=e=>{ingest(e.target.files);e.target.value='';};
 $('load-demo').onclick=$('app-demo').onclick=()=>{load(0,false);playlist(false);};$('empty-menu').onclick=closeMedia;
 $('playlist-toggle').onclick=()=>playlist();$('quick-toggle').onclick=()=>quick();$('quick-close').onclick=closeQuick;
 $('fullscreen').onclick=fullscreen;$('mute').onclick=mute;$('rewind').onclick=()=>seek(-5);$('forward').onclick=()=>seek(5);$('previous').onclick=()=>stepVideo(-1);$('next').onclick=()=>stepVideo(1);
-$('speed-button').onclick=()=>quick(0);$('captions-button').onclick=()=>subtitles(!s.subtitles);
+$('speed-button').onclick=$('speed-control-menu').onclick=()=>quick(0);
+$('quick-menu').onclick=()=>quick();$('fullscreen-menu').onclick=fullscreen;$('captions-button').onclick=()=>subtitles(!s.subtitles);
 $('more-button').onclick=()=>showMenu($('more-menu'),$('more-button'));$('app-menu-button').onclick=()=>showMenu($('app-menu'),$('app-menu-button'));$('file-info-button').onclick=()=>{if(s.loaded)showMenu($('file-info'),$('file-info-button'));};
 $('tracks-menu').onclick=()=>showMenu($('captions-menu'),$('more-button'));
 $('settings-menu').onclick=$('app-settings').onclick=$('quick-settings').onclick=()=>settings();$('quick-shortcuts').onclick=()=>settings('shortcuts');
@@ -171,13 +196,13 @@ $('quick-panel').addEventListener('click',event=>{const row=event.target.closest
 $('seek').oninput=e=>{if(s.loaded){seekBefore=video.currentTime;video.currentTime=+e.target.value;updateTime();hideLater();}};
 $('seek').onpointermove=e=>{if(!s.previews||!s.loaded)return;const r=e.currentTarget.getBoundingClientRect(),f=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));$('seek-preview').hidden=false;$('seek-preview').style.left=`${Math.max(80,Math.min(r.width-80,f*r.width))}px`;$('seek-preview-time').textContent=fmt(f*+$('seek').max);hideLater();};$('seek').onpointerleave=()=>$('seek-preview').hidden=true;
 $('queue-list').onclick=e=>{const b=e.target.closest('[data-play]'),row=e.target.closest('[data-index]');if(b)activate(+b.dataset.play);else if(row)activate(+row.dataset.index);};$('play-selected').onclick=()=>activate();
-function gallery(value){s.gallery=value;$('playlist').classList.toggle('gallery',value);$('compact-view').classList.toggle('selected',!value);$('gallery-view').classList.toggle('selected',value);$('compact-view').setAttribute('aria-pressed',String(!value));$('gallery-view').setAttribute('aria-pressed',String(value));}
+function gallery(value){s.gallery=value;$('playlist').classList.toggle('gallery',value);$('compact-view').classList.toggle('selected',!value);$('gallery-view').classList.toggle('selected',value);$('compact-view').setAttribute('aria-pressed',String(!value));$('gallery-view').setAttribute('aria-pressed',String(value));syncFullscreenTransport();}
 $('compact-view').onclick=()=>gallery(false);$('gallery-view').onclick=()=>gallery(true);
 stage.onclick=e=>{if(e.target===stage||e.target===video||e.target===$('media-frame')){stage.focus({preventScroll:true});closeMenus();play();}};
 app.onpointermove=hideLater;$('transport').onfocusin=hideLater;
-document.addEventListener('pointerdown',e=>{if(menu&&!menu.contains(e.target)&&!anchor?.contains(e.target))closeMenus();});window.addEventListener('resize',()=>closeMenus());
-document.addEventListener('fullscreenchange',()=>{changeIcon($('fullscreen'),document.fullscreenElement?'arrows-in-simple':'arrows-out-simple');$('fullscreen').setAttribute('aria-label',document.fullscreenElement?'退出全屏':'进入全屏');hideLater();});
-video.addEventListener('loadedmetadata',()=>{const item=items[s.current];item.duration=video.duration;video.currentTime=Math.min(pendingStart,Math.max(0,video.duration-.2));video.playbackRate=s.speed;updateTime();if(item.local){$('info-details').textContent=`${video.videoWidth} × ${video.videoHeight} · ${fmt(video.duration)}`;$('media-meta').innerHTML=`${video.videoHeight}p <span class="meta-dot">·</span> 本地影片`;}queue();if(video.dataset.playAfterLoad==='true')startPlayback();updatePlay();});
+document.addEventListener('pointerdown',e=>{if(menu&&!menu.contains(e.target)&&!anchor?.contains(e.target))closeMenus();});window.addEventListener('resize',()=>{closeMenus();syncFullscreenTransport();});
+document.addEventListener('fullscreenchange',()=>{changeIcon($('fullscreen'),document.fullscreenElement?'arrows-in-simple':'arrows-out-simple');$('fullscreen').setAttribute('aria-label',document.fullscreenElement?'退出全屏':'进入全屏');syncFullscreenTransport();hideLater();});
+video.addEventListener('loadedmetadata',()=>{const item=items[s.current];item.duration=video.duration;video.currentTime=Math.min(pendingStart,Math.max(0,video.duration-.2));video.playbackRate=s.speed;updateTime();if(item.local){$('info-details').textContent=`${video.videoWidth} × ${video.videoHeight} · ${fmt(video.duration)}`;}queue();if(video.dataset.playAfterLoad==='true')startPlayback();updatePlay();});
 video.addEventListener('loadeddata',()=>{const item=items[s.current];if(item.local&&!item.thumbnail){try{const c=document.createElement('canvas');c.width=160;c.height=Math.max(1,Math.round(160*video.videoHeight/video.videoWidth));c.getContext('2d').drawImage(video,0,0,c.width,c.height);item.image=c.toDataURL('image/jpeg',.85);item.thumbnail=true;queue();}catch{}}});
 video.addEventListener('timeupdate',updateTime);video.addEventListener('play',updatePlay);video.addEventListener('pause',updatePlay);video.addEventListener('ended',()=>{updatePlay();hud('播放结束');});video.addEventListener('error',()=>{toast('当前浏览器不支持此文件，请尝试 MP4、MOV 或 WebM。');hud('无法播放此文件');});
 app.addEventListener('dragenter',e=>{if(e.dataTransfer?.types.includes('Files')){e.preventDefault();dragDepth++;$('drop-target').hidden=false;}});app.addEventListener('dragover',e=>{e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='copy';});app.addEventListener('dragleave',e=>{e.preventDefault();if(--dragDepth<=0){dragDepth=0;$('drop-target').hidden=true;}});app.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('drop-target').hidden=true;ingest(e.dataTransfer.files);});
@@ -196,7 +221,7 @@ document.addEventListener('keydown',e=>{
   if(!navigation)return;
   if(e.target.matches('textarea,[contenteditable=true],input:not([type=range]):not([type=checkbox]):not([type=file])'))return;
   if(menu){
-    const buttons=[...menu.querySelectorAll('button:not(:disabled)')],index=buttons.indexOf(document.activeElement);
+    const buttons=menuButtons(menu),index=buttons.indexOf(document.activeElement);
     if(k==='arrowdown'||k==='arrowup')return consume(()=>buttons[(index+(k==='arrowdown'?1:-1)+buttons.length)%buttons.length]?.focus());
     if(k==='home'||k==='end')return consume(()=>buttons[k==='home'?0:buttons.length-1]?.focus());
     if(k===' '||k==='enter')return consume(()=>{if(!e.repeat&&index>=0)buttons[index].click();});
@@ -212,7 +237,6 @@ document.addEventListener('keydown',e=>{
     if(k===' '||k==='enter')return consume(()=>{if(!e.repeat)adjustQuick(0,true);});
   } else if(s.playlist){
     if([h.up,h.down,'arrowup','arrowdown'].includes(k))return consume(()=>select(s.selected+([h.down,'arrowdown'].includes(k)?1:-1),true));
-    if([h.back,h.forward,'arrowleft','arrowright'].includes(k))return consume();
     if(k==='home'||k==='end')return consume(()=>select(k==='home'?0:items.length-1,true));
     if(k===' '||k==='enter')return consume(()=>{if(!e.repeat)activate();});
   }
@@ -220,6 +244,7 @@ document.addEventListener('keydown',e=>{
   if([h.forward,'arrowright'].includes(k))return consume(()=>seek(e.shiftKey?30:5));
   if(e.shiftKey&&[h.up,'arrowup'].includes(k))return consume(()=>volume(s.volume+5));
   if(e.shiftKey&&[h.down,'arrowdown'].includes(k))return consume(()=>volume(s.volume-5));
+  if(k==='+'||(plain&&k==='=')||(plain&&k==='-'))return consume(()=>{zoom(s.zoom+(k==='-'?-25:25));hud(s.zoom===100?'适应窗口':`缩放 ${s.zoom}%`);});
   if(!plain)return;
   if(k===' ')return consume(()=>{if(!e.repeat)play();});
   if(k===h.previous||k==='arrowup')return consume(()=>{if(!e.repeat)stepVideo(-1);});
@@ -232,4 +257,6 @@ document.addEventListener('keydown',e=>{
   if(k===h.undo)return consume(()=>{if(e.repeat)return;if(seekBefore===null)return hud('还没有可撤销的跳转');const current=video.currentTime;video.currentTime=seekBefore;seekBefore=current;updateTime();hud('已撤销跳转');});
 });
 queue();apply();zoom(100);updatePlay();playlist(false);
+const transportObserver=new ResizeObserver(syncTransportLayout);
+transportObserver.observe($('transport'));syncTransportLayout();
 })();

@@ -121,7 +121,9 @@ final class ShortcutEditor: NSObject, NSTableViewDataSource, NSTableViewDelegate
         let content = ShortcutEditorContentView(frame: NSRect(x: 0, y: 0, width: 740, height: 540))
         panel.contentView = content
         sheet = panel
-        sidebar.fillColor = SettingsPalette.sidebar
+        // The sheet paints both backdrops once, so translucent fills do not
+        // stack and turn the sidebar opaque again.
+        sidebar.fillColor = .clear
         sidebar.cornerRadius = 0
         sidebar.drawsBorder = false
         BrandTypography.applyWordmark(to: brandLabel, size: 13)
@@ -462,8 +464,10 @@ private final class ShortcutEditorContentView: SettingsFlippedView {
     required init?(coder: NSCoder) { fatalError() }
     override func layout() { super.layout(); onLayout?(bounds) }
     override func draw(_ dirtyRect: NSRect) {
-        SettingsPalette.background.setFill()
-        bounds.fill()
+        SettingsPalette.background.withAlphaComponent(0.88).setFill()
+        NSRect(x: 160, y: 0, width: max(0, bounds.width - 160), height: bounds.height).fill()
+        SettingsPalette.sidebar.withAlphaComponent(0.88).setFill()
+        NSRect(x: 0, y: 0, width: min(160, bounds.width), height: bounds.height).fill()
         SettingsPalette.line.setFill()
         NSRect(x: 160, y: 0, width: 1, height: bounds.height).fill()
         NSRect(x: 160, y: bounds.height - 60, width: max(0, bounds.width - 160), height: 1).fill()

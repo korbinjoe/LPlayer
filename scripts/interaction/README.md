@@ -10,13 +10,21 @@ python3 scripts/interaction/run-controller.py
 Playback W/S mirrors Up/Down (previous/next video), and A/D mirrors Left/Right
 (seek ±5 seconds). Right-hand I/K/J/L mirrors the same arrows. Shift+up/down
 pairs adjust volume; Shift+left/right pairs seek ±30 seconds. In the playlist,
-these directions select/browse; in Quick Controls, they navigate/adjust.
-Those visible modes retain priority even with Shift. Q/E and U/O retain speed
-adjustment. Long-held video keys switch only once.
+vertical directions select/browse, including Shift combinations; horizontal
+keys seek the current playing video even with a different row selected, using
+±5 seconds normally or ±30 seconds with Shift, and repeat while held.
+Quick Controls retains all directions for navigation/adjustment, even with Shift. Q/E and U/O retain speed
+adjustment. Both hands use = to zoom in and - to zoom out by 25 percentage
+points, within 100%–500%; holding these keys repeats the adjustment. + is an
+alias while zoom-in still uses its default = and no custom action owns +.
+0 / Cmd+0 resets the picture. Long-held video keys switch only once.
 
-The defaults use configuration schema 2. Existing v1 hands with customized
-bindings retain their previous complete effective layout. A hand without
-customization adopts the new preset; Reset All adopts the new preset.
+The defaults use configuration schema 3. Existing v1 hands with customized
+bindings retain their previous complete effective layout. v1/v2 migration adds
+the zoom defaults only when the action was not explicitly customized or disabled
+and its key is free; a colliding inherited zoom default stays disabled while the
+custom binding is preserved. A hand without customization adopts the new preset;
+Reset All adopts the new preset.
 
 The fixture snapshots every production Swift file, then checks the actual
 `handleKey` routing, visible-mode priority, original 15 Quick Control actions,
@@ -26,6 +34,13 @@ media/history/grants, and a removed-on-exit UserDefaults suite. Only the
 key-window guard is omitted from the temporary handler copy; the remaining
 ownership, editable-input, sheet and repeat guards remain intact. Production
 sources are never modified.
+
+Playlist hover checks exercise the real row configuration, tracking refresh,
+layout, clip scrolling and window-focus observers. A hidden owned window supplies
+deterministic local pointer coordinates and key state without moving the user's
+mouse. Reused rows must clear stale play cues; only the row under the pointer
+and a selected nonplaying row may retain the large play icon. Both row bounds
+and the clipped visible area constrain hover, including compact and gallery rows.
 
 Volume checks enable normal history only inside the scratch store and seed
 three bookmarks with different legacy per-file volumes. The actual transport

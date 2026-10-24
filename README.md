@@ -61,6 +61,7 @@ These are the current default presets. Previously customized layouts retain thei
 | Full screen | `F` | `H` |
 | Toggle subtitles | `G` | `;` |
 | Undo seek | `Z` | `M` |
+| Zoom in / out | `=` / `-` | `=` / `-` |
 | Fit video to window | `0` | `0` |
 
 `W/A/S/D` and `I/J/K/L` match `↑/←/↓/→`. Their behavior follows the visible mode:
@@ -68,10 +69,10 @@ These are the current default presets. Previously customized layouts retain thei
 | Mode | Up / down | Left / right | Space / Enter |
 | --- | --- | --- | --- |
 | Playback | Previous / next video | Seek 5 seconds | Space plays / pauses |
-| Playlist | Select and silently preview | Keep the main video unchanged | Play the selected item |
+| Playlist | Select and silently preview | Seek the current video 5 seconds | Play the selected item |
 | Quick Controls | Select a control | Adjust its value | Activate or reset the control |
 
-During playback, `Shift+↑/↓` adjusts volume and `Shift+←/→` seeks 30 seconds, matching the corresponding letter keys. In the playlist and Quick Controls, Shift plus a direction still belongs to that visible mode. Holding a video-switch key does not skip multiple videos.
+During playback, `Shift+↑/↓` adjusts volume and `Shift+←/→` seeks 30 seconds, matching the corresponding letter keys. In the playlist, only vertical directions are reserved for selection; horizontal keys seek the current playing video, even when a different row is selected. Shift plus a horizontal key seeks 30 seconds, and holding a seek key repeats. Quick Controls retains all direction keys for navigation and adjustment, including Shift combinations. Holding a video-switch key does not skip multiple videos.
 
 Additional shortcuts:
 
@@ -110,6 +111,8 @@ Private playback saves normal progress before being enabled, then stops reading 
 ## Trackpad and previews
 
 Pinch over the video to zoom around the pointer. When zoomed, slide two fingers without pressing the trackpad to move the picture; movement follows the fingers and stops when they lift. Pan sensitivity is adjustable from 25% to 150%, with 100% as the default. The picture stays within its bounds, and switching videos resets zoom and pan.
+
+Use `=` (or `+`) to zoom in and `-` to zoom out in 25 percentage point steps, from 100% to 500%. Holding either key adjusts continuously. These defaults work in both hand layouts and can be customized in Settings.
 
 Double-tap with two fingers to switch between 2× zoom and fit-to-window, or press `0` / `⌘0` to reset. Gestures that start over the playlist, controls, or help sidebar retain that surface's interaction.
 

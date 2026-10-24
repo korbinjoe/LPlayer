@@ -61,6 +61,7 @@ Dies sind die aktuellen Standardbelegungen. Bereits angepasste Belegungen behalt
 | Vollbild | `F` | `H` |
 | Untertitel ein- / ausblenden | `G` | `;` |
 | Positionssprung rückgängig machen | `Z` | `M` |
+| Bild vergrößern / verkleinern | `=` / `-` | `=` / `-` |
 | Video an Fenster anpassen | `0` | `0` |
 
 `W/A/S/D` und `I/J/K/L` entsprechen `↑/←/↓/→`. Ihr Verhalten richtet sich nach dem sichtbaren Modus:
@@ -68,10 +69,10 @@ Dies sind die aktuellen Standardbelegungen. Bereits angepasste Belegungen behalt
 | Modus | Auf / ab | Links / rechts | Space / Enter |
 | --- | --- | --- | --- |
 | Wiedergabe | Vorheriges / nächstes Video | 5 Sekunden springen | Space startet / pausiert |
-| Wiedergabeliste | Auswählen und stumme Vorschau anzeigen | Hauptvideo unverändert lassen | Ausgewählten Eintrag abspielen |
+| Wiedergabeliste | Auswählen und stumme Vorschau anzeigen | Aktuelles Video um 5 Sekunden versetzen | Ausgewählten Eintrag abspielen |
 | Schnellsteuerungen | Bedienelement auswählen | Wert ändern | Bedienelement aktivieren oder zurücksetzen |
 
-Während der Wiedergabe ändert `Shift+↑/↓` die Lautstärke und `Shift+←/→` springt um 30 Sekunden, entsprechend den zugehörigen Buchstabentasten. In der Wiedergabeliste und den Schnellsteuerungen bleibt Shift mit einer Richtung dem sichtbaren Modus zugeordnet. Das Gedrückthalten einer Taste für den Videowechsel überspringt nicht mehrere Videos.
+Während der Wiedergabe ändert `Shift+↑/↓` die Lautstärke und `Shift+←/→` springt um 30 Sekunden, entsprechend den zugehörigen Buchstabentasten. In der Wiedergabeliste sind nur die vertikalen Richtungen für die Auswahl reserviert; horizontale Tasten versetzen das aktuell abgespielte Video, auch wenn ein anderer Eintrag ausgewählt ist. Mit Shift beträgt der Sprung 30 Sekunden; gedrückt gehaltene Sprungtasten wiederholen die Aktion. In den Schnellsteuerungen dienen alle Richtungstasten einschließlich Shift der Navigation und Anpassung. Das Gedrückthalten einer Taste für den Videowechsel überspringt nicht mehrere Videos.
 
 Weitere Tastenkürzel:
 
@@ -110,6 +111,8 @@ Vor dem Einschalten der privaten Wiedergabe wird der normale Wiedergabefortschri
 ## Trackpad und Vorschauen
 
 Mit einer Pinch-Geste über dem Video wird um den Zeiger herum gezoomt. Bei vergrößertem Bild verschieben zwei Finger ohne Druck auf das Trackpad das Bild; die Bewegung folgt den Fingern und endet beim Abheben. Die Empfindlichkeit ist von 25 % bis 150 % einstellbar, standardmäßig 100 %. Das Bild bleibt innerhalb seiner Grenzen; beim Videowechsel werden Zoom und Verschiebung zurückgesetzt.
+
+Mit `=` (oder `+`) wird das Bild vergrößert, mit `-` verkleinert: in Schritten von 25 Prozentpunkten zwischen 100 % und 500 %. Gedrückthalten passt den Zoom fortlaufend an. Die Standardtasten gelten für beide Hände und lassen sich in den Einstellungen anpassen.
 
 Zweimaliges Tippen mit zwei Fingern wechselt zwischen 2×-Zoom und Anpassung an das Fenster. `0` / `⌘0` setzt die Ansicht ebenfalls zurück. Gesten, die über der Wiedergabeliste, den Bedienelementen oder der Hilfeseitenleiste beginnen, behalten die Interaktion des jeweiligen Bereichs.
 
