@@ -14,17 +14,23 @@ vertical directions select/browse, including Shift combinations; horizontal
 keys seek the current playing video even with a different row selected, using
 ±5 seconds normally or ±30 seconds with Shift, and repeat while held.
 Quick Controls retains all directions for navigation/adjustment, even with Shift. Q/E and U/O retain speed
-adjustment. Both hands use = to zoom in and - to zoom out by 25 percentage
-points, within 100%–500%; holding these keys repeats the adjustment. + is an
-alias while zoom-in still uses its default = and no custom action owns +.
-0 / Cmd+0 resets the picture. Long-held video keys switch only once.
+adjustment. Both hands retain = / + to zoom in, - to zoom out, and 0 / Cmd+0
+to fit the picture. The nearby left-hand cluster is 1 / 2 / 3 (fit / out / in);
+the right-hand cluster is 7 / 8 / 9. Zoom changes by 25 percentage points,
+within 100%–500%; holding zoom-in or zoom-out repeats the adjustment.
+Convenience numeric keys and + follow their corresponding editable defaults:
+remapping or clearing the action removes its convenience keys, and an existing
+custom binding keeps ownership of its key. Compact playback hints prefer an
+active nearby numeric key and otherwise display the effective primary.
+Long-held video keys switch only once.
 
 The defaults use configuration schema 3. Existing v1 hands with customized
 bindings retain their previous complete effective layout. v1/v2 migration adds
 the zoom defaults only when the action was not explicitly customized or disabled
 and its key is free; a colliding inherited zoom default stays disabled while the
 custom binding is preserved. A hand without customization adopts the new preset;
-Reset All adopts the new preset.
+Reset All adopts the new preset. Numeric zoom aliases also honor saved custom
+keys in v1, v2 and v3 profiles without changing the current storage schema.
 
 The fixture snapshots every production Swift file, then checks the actual
 `handleKey` routing, visible-mode priority, original 15 Quick Control actions,
@@ -34,6 +40,12 @@ media/history/grants, and a removed-on-exit UserDefaults suite. Only the
 key-window guard is omitted from the temporary handler copy; the remaining
 ownership, editable-input, sheet and repeat guards remain intact. Production
 sources are never modified.
+
+Zoom checks send the numeric cluster through the real handler in playback,
+shortcut help, the playlist and Quick Controls, then inspect the actual MPV
+viewport and unchanged file, selection, mode, volume and speed. They also check
+repeat bounds, the retained original keys, exact modifiers, opposite-hand keys,
+editable text input and events belonging to another never-ordered window.
 
 Playlist hover checks exercise the real row configuration, tracking refresh,
 layout, clip scrolling and window-focus observers. A hidden owned window supplies

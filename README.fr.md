@@ -61,8 +61,8 @@ Voici les configurations par défaut actuelles. Les configurations déjà person
 | Plein écran | `F` | `H` |
 | Afficher / masquer les sous-titres | `G` | `;` |
 | Annuler le déplacement dans la lecture | `Z` | `M` |
-| Agrandir / réduire l’image | `=` / `-` | `=` / `-` |
-| Adapter la vidéo à la fenêtre | `0` | `0` |
+| Agrandir / réduire l’image | `3` / `2` (également `=` / `-`) | `9` / `8` (également `=` / `-`) |
+| Adapter la vidéo à la fenêtre | `1` / `0` | `7` / `0` |
 
 `W/A/S/D` et `I/J/K/L` correspondent à `↑/←/↓/→`. Leur comportement dépend du mode visible :
 
@@ -112,7 +112,7 @@ La lecture privée enregistre la progression normale avant son activation, puis 
 
 Pincez au-dessus de la vidéo pour zoomer autour du pointeur. Lorsque l'image est agrandie, faites glisser deux doigts sans appuyer sur le trackpad pour la déplacer ; le mouvement suit les doigts et s'arrête lorsque vous les retirez. La sensibilité est réglable de 25 % à 150 %, avec une valeur par défaut de 100 %. L'image reste dans ses limites, et tout changement de vidéo réinitialise le zoom et le déplacement.
 
-Appuyez sur `=` (ou `+`) pour agrandir et sur `-` pour réduire, par pas de 25 points de pourcentage, entre 100 % et 500 %. Maintenez la touche pour ajuster en continu. Ces touches par défaut sont communes aux deux mains et peuvent être personnalisées dans les réglages.
+Appuyez sur `=` (ou `+`) pour agrandir et sur `-` pour réduire, par pas de 25 points de pourcentage, entre 100 % et 500 %. Maintenez la touche pour ajuster en continu. Pour une utilisation à une main, la configuration gauche ajoute `2` / `3` pour réduire / agrandir et `1` pour adapter à la fenêtre ; la droite ajoute `8` / `9` et `7`. Ces chiffres ne demandent aucune touche de modification et suivent la configuration active. Un alias reste disponible tant que son action de zoom conserve sa touche principale par défaut. Si le chiffre est déjà attribué à une autre action personnalisée, cette attribution reste prioritaire. Les touches principales de zoom restent personnalisables dans les réglages.
 
 Touchez deux fois le trackpad avec deux doigts pour alterner entre un zoom 2× et l'adaptation à la fenêtre, ou appuyez sur `0` / `⌘0` pour réinitialiser l'affichage. Les gestes qui commencent au-dessus de la liste de lecture, des commandes ou de la barre latérale d'aide conservent l'interaction propre à cette zone.
 

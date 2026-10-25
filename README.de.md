@@ -61,8 +61,8 @@ Dies sind die aktuellen Standardbelegungen. Bereits angepasste Belegungen behalt
 | Vollbild | `F` | `H` |
 | Untertitel ein- / ausblenden | `G` | `;` |
 | Positionssprung rückgängig machen | `Z` | `M` |
-| Bild vergrößern / verkleinern | `=` / `-` | `=` / `-` |
-| Video an Fenster anpassen | `0` | `0` |
+| Bild vergrößern / verkleinern | `3` / `2` (auch `=` / `-`) | `9` / `8` (auch `=` / `-`) |
+| Video an Fenster anpassen | `1` / `0` | `7` / `0` |
 
 `W/A/S/D` und `I/J/K/L` entsprechen `↑/←/↓/→`. Ihr Verhalten richtet sich nach dem sichtbaren Modus:
 
@@ -112,7 +112,7 @@ Vor dem Einschalten der privaten Wiedergabe wird der normale Wiedergabefortschri
 
 Mit einer Pinch-Geste über dem Video wird um den Zeiger herum gezoomt. Bei vergrößertem Bild verschieben zwei Finger ohne Druck auf das Trackpad das Bild; die Bewegung folgt den Fingern und endet beim Abheben. Die Empfindlichkeit ist von 25 % bis 150 % einstellbar, standardmäßig 100 %. Das Bild bleibt innerhalb seiner Grenzen; beim Videowechsel werden Zoom und Verschiebung zurückgesetzt.
 
-Mit `=` (oder `+`) wird das Bild vergrößert, mit `-` verkleinert: in Schritten von 25 Prozentpunkten zwischen 100 % und 500 %. Gedrückthalten passt den Zoom fortlaufend an. Die Standardtasten gelten für beide Hände und lassen sich in den Einstellungen anpassen.
+Mit `=` (oder `+`) wird das Bild vergrößert, mit `-` verkleinert: in Schritten von 25 Prozentpunkten zwischen 100 % und 500 %. Gedrückthalten passt den Zoom fortlaufend an. Für die linke Hand verkleinert / vergrößert `2` / `3` das Bild, `1` passt es ans Fenster an; für die rechte Hand gelten `8` / `9` und `7`. Die Zahlentasten benötigen keine Zusatztaste und folgen der aktiven Handbelegung. Ein Alias ist verfügbar, solange die zugehörige Zoomaktion ihre Standard-Haupttaste behält. Ist die Zahl bereits einer anderen benutzerdefinierten Aktion zugewiesen, bleibt diese Zuordnung erhalten. Die Zoom-Haupttasten lassen sich weiterhin in den Einstellungen anpassen.
 
 Zweimaliges Tippen mit zwei Fingern wechselt zwischen 2×-Zoom und Anpassung an das Fenster. `0` / `⌘0` setzt die Ansicht ebenfalls zurück. Gesten, die über der Wiedergabeliste, den Bedienelementen oder der Hilfeseitenleiste beginnen, behalten die Interaktion des jeweiligen Bereichs.
 

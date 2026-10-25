@@ -438,9 +438,9 @@ final class KeyHelpView: NSView {
 
     private func makeShortcutItems() -> [(String, String)] {
         let configured = ShortcutAction.allCases.compactMap { action -> (String, String)? in
-            let primary = shortcuts.map { $0.binding(for: action, hand: hand) }
+            let binding = shortcuts.map { $0.hintBinding(for: action, hand: hand) }
+                ?? ShortcutDefaults.oneHandAlias(for: action, hand: hand)
                 ?? ShortcutStore.defaultBinding(for: action, hand: hand)
-            let binding = primary ?? shortcuts?.aliases(for: action, hand: hand).first
             guard let binding else { return nil }
             return (binding.display, action.title)
         }
@@ -449,8 +449,7 @@ final class KeyHelpView: NSView {
 
     private func shortcutLabel(_ action: ShortcutAction) -> String {
         if let shortcuts {
-            return shortcuts.binding(for: action, hand: hand)?.display
-                ?? shortcuts.aliases(for: action, hand: hand).first?.display ?? "—"
+            return shortcuts.hintBinding(for: action, hand: hand)?.display ?? "—"
         }
         return ShortcutStore.defaultBinding(for: action, hand: hand)?.display ?? "—"
     }

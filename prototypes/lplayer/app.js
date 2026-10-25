@@ -26,7 +26,7 @@ const fmt = n => { n = Math.max(0,Math.floor(n || 0)); return `${String(Math.flo
 const helpOpen = () => Boolean(window.LPlayerDialogs?.isHelpOpen?.());
 const quickRows = () => [...$('quick-panel').querySelectorAll('[data-qrow]')];
 const menuButtons = el => [...el.querySelectorAll('button:not(:disabled)')].filter(button=>!button.hidden);
-const keysForHand = () => s.hand === 'right' ? {up:'i',down:'k',back:'j',forward:'l',slower:'u',faster:'o',normal:'p',previous:'i',next:'k',panel:',',list:"'",help:'y',full:'h',subtitle:';',undo:'m'} : {up:'w',down:'s',back:'a',forward:'d',slower:'q',faster:'e',normal:'r',previous:'w',next:'s',panel:'c',list:'t',help:'v',full:'f',subtitle:'g',undo:'z'};
+const keysForHand = () => s.hand === 'right' ? {up:'i',down:'k',back:'j',forward:'l',slower:'u',faster:'o',normal:'p',previous:'i',next:'k',panel:',',list:"'",help:'y',full:'h',subtitle:';',undo:'m',zoomOut:'8',zoomIn:'9',zoomFit:'7'} : {up:'w',down:'s',back:'a',forward:'d',slower:'q',faster:'e',normal:'r',previous:'w',next:'s',panel:'c',list:'t',help:'v',full:'f',subtitle:'g',undo:'z',zoomOut:'2',zoomIn:'3',zoomFit:'1'};
 function hydrate(){ document.querySelectorAll('[data-icon]').forEach(el=>{el.style.setProperty('--icon',`url('assets/icons/${el.dataset.icon}.svg')`);el.setAttribute('aria-hidden','true');}); }
 function changeIcon(button,name){ button.querySelector('.icon').style.setProperty('--icon',`url('assets/icons/${name}.svg')`); }
 function fill(input){ const max = +input.max || 100, min = +input.min || 0; input.style.setProperty('--fill',`${100*(+input.value-min)/(max-min)}%`); }
@@ -78,8 +78,8 @@ function apply(){
   $('speed-button').title=`播放速度 · 打开快捷面板首行 · ${pair(k.slower,k.faster)} 调整`;
   $('speed-menu').querySelector('.menu-hint').textContent=`${pair(k.slower,k.faster)} 调节 · ${k.normal.toUpperCase()} 恢复`;
   $('volume').title=`音量 · Shift+${pair(k.up,k.down)} / Shift+↑↓ 增大 / 减小`;
-  $('quick-zoom').title='画面缩放 · = / + 放大，- 缩小 · 每次 25% · 0 / ⌘0 复原';
-  $('reset-zoom').title='画面适应窗口 · 0 / ⌘0';
+  $('quick-zoom').title=`画面缩放 · ${k.zoomOut} / ${k.zoomIn} 缩小 / 放大 · 兼容 - / = / + · 每次 25% · ${k.zoomFit} / 0 / ⌘0 复原`;
+  $('reset-zoom').title=`画面适应窗口 · ${k.zoomFit} / 0 / ⌘0`;
   $('captions-button').title=`显示 / 隐藏字幕 · ${k.subtitle.toUpperCase()}`;$('captions-button').setAttribute('aria-label',s.subtitles?'隐藏字幕':'显示字幕');
   $('help-button').title=`快捷键帮助 · ${k.help.toUpperCase()}`;
   document.querySelectorAll('[data-help-shortcut]').forEach(el=>el.textContent=k.help.toUpperCase());
@@ -244,7 +244,7 @@ document.addEventListener('keydown',e=>{
   if([h.forward,'arrowright'].includes(k))return consume(()=>seek(e.shiftKey?30:5));
   if(e.shiftKey&&[h.up,'arrowup'].includes(k))return consume(()=>volume(s.volume+5));
   if(e.shiftKey&&[h.down,'arrowdown'].includes(k))return consume(()=>volume(s.volume-5));
-  if(k==='+'||(plain&&k==='=')||(plain&&k==='-'))return consume(()=>{zoom(s.zoom+(k==='-'?-25:25));hud(s.zoom===100?'适应窗口':`缩放 ${s.zoom}%`);});
+  if(k==='+'||(plain&&['=','-',h.zoomIn,h.zoomOut].includes(k)))return consume(()=>{zoom(s.zoom+(['-',h.zoomOut].includes(k)?-25:25));hud(s.zoom===100?'适应窗口':`缩放 ${s.zoom}%`);});
   if(!plain)return;
   if(k===' ')return consume(()=>{if(!e.repeat)play();});
   if(k===h.previous||k==='arrowup')return consume(()=>{if(!e.repeat)stepVideo(-1);});
@@ -253,7 +253,7 @@ document.addEventListener('keydown',e=>{
   if(k===h.normal)return consume(()=>{if(!e.repeat)speed(1);});
   if(k===h.full)return consume(()=>{if(!e.repeat)fullscreen();});
   if(k===h.subtitle)return consume(()=>{if(!e.repeat)subtitles(!s.subtitles);});
-  if(k==='0')return consume(()=>{if(!e.repeat){zoom(100);hud('适应窗口');}});
+  if(k==='0'||k===h.zoomFit)return consume(()=>{if(!e.repeat){zoom(100);hud('适应窗口');}});
   if(k===h.undo)return consume(()=>{if(e.repeat)return;if(seekBefore===null)return hud('还没有可撤销的跳转');const current=video.currentTime;video.currentTime=seekBefore;seekBefore=current;updateTime();hud('已撤销跳转');});
 });
 queue();apply();zoom(100);updatePlay();playlist(false);

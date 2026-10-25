@@ -61,8 +61,8 @@ Estos son los perfiles predeterminados actuales. Los perfiles personalizados ant
 | Pantalla completa | `F` | `H` |
 | Mostrar / ocultar subtítulos | `G` | `;` |
 | Deshacer el último salto | `Z` | `M` |
-| Ampliar / reducir la imagen | `=` / `-` | `=` / `-` |
-| Ajustar el vídeo a la ventana | `0` | `0` |
+| Ampliar / reducir la imagen | `3` / `2` (también `=` / `-`) | `9` / `8` (también `=` / `-`) |
+| Ajustar el vídeo a la ventana | `1` / `0` | `7` / `0` |
 
 `W/A/S/D` e `I/J/K/L` corresponden a `↑/←/↓/→`. Su comportamiento depende del modo visible:
 
@@ -112,7 +112,7 @@ La reproducción privada guarda el progreso normal antes de activarse y, despué
 
 Pellizca sobre el vídeo para ampliar alrededor del puntero. Con la imagen ampliada, desliza dos dedos sin presionar el trackpad para moverla; el movimiento sigue a los dedos y se detiene al levantarlos. La sensibilidad se puede ajustar del 25% al 150%, con un 100% como valor predeterminado. La imagen se mantiene dentro de sus límites y cambiar de vídeo restablece el zoom y el desplazamiento.
 
-Pulsa `=` (o `+`) para ampliar y `-` para reducir en pasos de 25 puntos porcentuales, entre el 100% y el 500%. Mantén pulsada la tecla para ajustar continuamente. Las teclas predeterminadas son las mismas para ambas manos y se pueden personalizar en los ajustes.
+Pulsa `=` (o `+`) para ampliar y `-` para reducir en pasos de 25 puntos porcentuales, entre el 100% y el 500%. Mantén pulsada la tecla para ajustar continuamente. Para usar una sola mano, la disposición izquierda añade `2` / `3` para reducir / ampliar y `1` para ajustar a la ventana; la derecha añade `8` / `9` y `7`. Estas teclas numéricas no necesitan modificadores y siguen la disposición activa. Cada alias está disponible mientras la acción de zoom correspondiente conserve su tecla principal predeterminada. Si un número ya está asignado a otra acción personalizada, se respeta esa asignación. Las teclas principales de zoom siguen siendo personalizables en los ajustes.
 
 Da dos toques con dos dedos para alternar entre zoom de 2× y ajuste a la ventana, o pulsa `0` / `⌘0` para restablecer. Los gestos que comienzan sobre la lista, los controles o la barra lateral de ayuda conservan la interacción de esa superficie.
 

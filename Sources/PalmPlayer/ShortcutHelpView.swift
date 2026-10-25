@@ -126,12 +126,13 @@ final class LPlayerShortcutHelpView: SettingsFlippedView {
     }
 
     private func bindingText(_ action: ShortcutAction) -> String {
-        // The active one-hand or customized primary stays visible. Shared
-        // arrows and other fixed aliases remain in each row's full tooltip.
+        // Show nearby one-hand zoom keys, or the customized primary. Every
+        // active alternative remains available in the row's full tooltip.
         if let shortcuts {
-            return shortcuts.binding(for: action, hand: hand)?.display ?? shortcuts.aliases(for: action, hand: hand).first?.display ?? "—"
+            return shortcuts.hintBinding(for: action, hand: hand)?.display ?? "—"
         }
-        return ShortcutStore.defaultBinding(for: action, hand: hand)?.display ?? "—"
+        return (ShortcutDefaults.oneHandAlias(for: action, hand: hand)
+            ?? ShortcutStore.defaultBinding(for: action, hand: hand))?.display ?? "—"
     }
     private func bindingDescription(_ action: ShortcutAction) -> String {
         var values = shortcuts?.aliases(for: action, hand: hand) ?? []

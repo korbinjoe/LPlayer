@@ -60,6 +60,9 @@ private final class FixtureKey: NSEvent {
             let nextSelection = hand == .left ? "s" : "k"
             let moreSpeed = hand == .left ? "d" : "l"
             let helpKey = hand == .left ? "v" : "y"
+            let zoomReset = hand == .left ? "1" : "7"
+            let zoomOut = hand == .left ? "2" : "8"
+            let zoomIn = hand == .left ? "3" : "9"
 
             key("=")
             check(close(app.restoreEngine.videoZoomScale, 1.25), "\(label): equals zooms the real video to 125 percent")
@@ -67,13 +70,27 @@ private final class FixtureKey: NSEvent {
             check(close(app.restoreEngine.videoZoomScale, 1.5), "\(label): shifted plus adds another 25 percentage points")
             key("-", repeatKey: true)
             check(close(app.restoreEngine.videoZoomScale, 1.25), "\(label): a repeated minus key is accepted by the real handler")
-            for _ in 0..<24 { key("=", repeatKey: true) }
-            check(close(app.restoreEngine.videoZoomScale, 5), "\(label): repeated zoom input clamps the actual viewport at 500 percent")
-            for _ in 0..<24 { key("-", repeatKey: true) }
-            check(close(app.restoreEngine.videoZoomScale, 1), "\(label): repeated zoom-out input stops at the fitted frame")
+            for _ in 0..<24 { key(zoomIn, repeatKey: true) }
+            check(close(app.restoreEngine.videoZoomScale, 5), "\(label): holding the nearby zoom-in key clamps the actual viewport at 500 percent")
+            for _ in 0..<24 { key(zoomOut, repeatKey: true) }
+            check(close(app.restoreEngine.videoZoomScale, 1), "\(label): holding the nearby zoom-out key stops at the fitted frame")
             key("="); key("0")
             check(close(app.restoreEngine.videoZoomScale, 1) && app.restoreQueueIndex == 0 && close(app.restoreEngine.snapshot.volume, 70),
                   "\(label): reset fits the video after keyboard zoom without changing file or volume")
+            key("="); key("0", modifiers: .command)
+            check(close(app.restoreEngine.videoZoomScale, 1), "\(label): the original Command-0 menu alias still fits the video")
+            oneHandZoom(app, hand: hand, mode: "playback")
+            let beforeModifiedZoom = app.restoreEngine.videoZoomScale
+            var ignoredZoomKeys = true
+            for text in [zoomReset, zoomOut, zoomIn] {
+                for modifiers: NSEvent.ModifierFlags in [.shift, .command, .option, .control] {
+                    ignoredZoomKeys = !key(text, modifiers: modifiers) && ignoredZoomKeys
+                }
+            }
+            for text in hand == .left ? ["7", "8", "9"] : ["1", "2", "3"] {
+                ignoredZoomKeys = !key(text) && ignoredZoomKeys
+            }
+            check(ignoredZoomKeys && close(app.restoreEngine.videoZoomScale, beforeModifiedZoom), "\(label): the real handler ignores modified numeric and opposite-hand zoom keys")
 
             key(listKey)
             check(app.restoreListOpen && !app.restorePanelOpen, "\(label): list key opens the exclusive playlist")
@@ -81,6 +98,7 @@ private final class FixtureKey: NSEvent {
             key(nextSelection)
             check(app.restoreSelection == 1 && app.restoreQueueIndex == 0 && close(app.restoreEngine.snapshot.volume, beforeSelection.volume) && abs(app.restoreEngine.snapshot.position - beforeSelection.position) < 0.3 && app.restoreSeekTarget == nil,
                   "\(label): S/K selects silently without main volume or seek changes")
+            oneHandZoom(app, hand: hand, mode: "playlist")
             playlistSeeking(app, hand: hand)
             key("\r"); wait(3) { app.restoreReady && app.restoreQueueIndex == 1 }
             check(app.restoreReady && app.restoreQueueIndex == 1 && app.restoreListOpen, "\(label): Enter plays the selection and keeps the list open")
@@ -104,6 +122,7 @@ private final class FixtureKey: NSEvent {
             app.restoreClickSubtitle()
             app.restoreClickSpeed()
             check(app.restorePanelOpen && !app.restoreListOpen && app.restorePanelIndex == 0, "\(label): actual speed button opens Quick Controls at speed")
+            oneHandZoom(app, hand: hand, mode: "quick controls")
             key("\r"); wait(1) { close(app.restoreEngine.snapshot.speed, 1) }
             key(moreSpeed); wait(1) { close(app.restoreEngine.snapshot.speed, 1.1) }
             check(close(app.restoreEngine.snapshot.speed, 1.1), "\(label): D/L raises the speed row by 0.1")
@@ -177,6 +196,7 @@ private final class FixtureKey: NSEvent {
             app.restoreMediaSetup(); wait(1) { app.restoreEngine.snapshot.paused && close(app.restoreEngine.snapshot.volume, 70) }
             key(helpKey)
             check(app.restoreHelpOpen && !app.restoreListOpen && !app.restorePanelOpen, "\(label): V/Y opens the nonmodal shortcut reference")
+            oneHandZoom(app, hand: hand, mode: "shortcut help")
             let referencePosition = app.restoreEngine.snapshot.position
             key(nextSelection, modifiers: .shift); key(moreSpeed)
             wait(2) { close(app.restoreEngine.snapshot.volume, 65) && abs(app.restoreEngine.snapshot.position - referencePosition - 5) < 0.3 }
@@ -185,10 +205,13 @@ private final class FixtureKey: NSEvent {
             key(helpKey)
             let input = NSTextView(frame: NSRect(x: 0, y: 0, width: 160, height: 40)); input.isEditable = true
             app.restoreSurface.addSubview(input); app.restoreWindow.makeFirstResponder(input)
-            let editableVolume = app.restoreEngine.snapshot.volume
-            let consumed = key(nextSelection)
-            check(app.restoreWindow.firstResponder === input && !consumed && close(app.restoreEngine.snapshot.volume, editableVolume), "\(label): editable-input guard rejects playback keys")
+            let editableVolume = app.restoreEngine.snapshot.volume, editableZoom = app.restoreEngine.videoZoomScale, editableFile = app.restoreQueueIndex
+            let consumed = [nextSelection, zoomReset, zoomOut, zoomIn, "=", "-", "0"].map { key($0) }
+            check(app.restoreWindow.firstResponder === input && consumed.allSatisfy { !$0 } && close(app.restoreEngine.snapshot.volume, editableVolume) && close(app.restoreEngine.videoZoomScale, editableZoom) && app.restoreQueueIndex == editableFile, "\(label): editable-input guard preserves typing for numeric and original zoom keys")
             app.restoreWindow.makeFirstResponder(app.restoreSurface); input.removeFromSuperview()
+            let foreign = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 160, height: 80), styleMask: [], backing: .buffered, defer: true)
+            let foreignKeys = [zoomReset, zoomOut, zoomIn].map { app.restoreKey(FixtureKey($0, window: foreign)) }
+            check(foreignKeys.allSatisfy { !$0 } && close(app.restoreEngine.videoZoomScale, editableZoom) && !foreign.isVisible, "\(label): event-window guard ignores one-hand zoom events owned by another hidden window")
         }
         fullscreenLayout(app)
         transportLayout(app)
@@ -202,6 +225,22 @@ private final class FixtureKey: NSEvent {
         try! JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys]).write(to: InteractionFixture.output.appendingPathComponent("results.json"))
         print("\(failures.isEmpty ? "PASS" : "FAIL") interaction restoration: \(assertions) assertions, \(failures.count) failures")
         return failures.isEmpty ? 0 : 1
+    }
+
+    static func oneHandZoom(_ app: PlayerApp, hand: HandLayout, mode: String) {
+        let zoomReset = hand == .left ? "1" : "7", zoomOut = hand == .left ? "2" : "8", zoomIn = hand == .left ? "3" : "9"
+        let file = app.restoreQueueIndex, selection = app.restoreSelection, panelIndex = app.restorePanelIndex
+        let volume = app.restoreEngine.snapshot.volume, speed = app.restoreEngine.snapshot.speed
+        let listOpen = app.restoreListOpen, panelOpen = app.restorePanelOpen, helpOpen = app.restoreHelpOpen
+        key(zoomReset)
+        let enlarged = key(zoomIn) && close(app.restoreEngine.videoZoomScale, 1.25)
+        let reduced = key(zoomOut) && close(app.restoreEngine.videoZoomScale, 1)
+        key(zoomIn)
+        let reset = key(zoomReset) && close(app.restoreEngine.videoZoomScale, 1)
+        check(enlarged && reduced && reset && app.restoreQueueIndex == file && app.restoreSelection == selection && app.restorePanelIndex == panelIndex
+                && close(app.restoreEngine.snapshot.volume, volume) && close(app.restoreEngine.snapshot.speed, speed)
+                && app.restoreListOpen == listOpen && app.restorePanelOpen == panelOpen && app.restoreHelpOpen == helpOpen,
+              "\(hand.rawValue): nearby reset/out/in keys route to the actual video in \(mode) without changing navigation, volume or speed")
     }
 
     static func playlistSeeking(_ app: PlayerApp, hand: HandLayout) {

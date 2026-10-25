@@ -61,8 +61,8 @@ These are the current default presets. Previously customized layouts retain thei
 | Full screen | `F` | `H` |
 | Toggle subtitles | `G` | `;` |
 | Undo seek | `Z` | `M` |
-| Zoom in / out | `=` / `-` | `=` / `-` |
-| Fit video to window | `0` | `0` |
+| Zoom in / out | `3` / `2` (also `=` / `-`) | `9` / `8` (also `=` / `-`) |
+| Fit video to window | `1` / `0` | `7` / `0` |
 
 `W/A/S/D` and `I/J/K/L` match `↑/←/↓/→`. Their behavior follows the visible mode:
 
@@ -112,7 +112,7 @@ Private playback saves normal progress before being enabled, then stops reading 
 
 Pinch over the video to zoom around the pointer. When zoomed, slide two fingers without pressing the trackpad to move the picture; movement follows the fingers and stops when they lift. Pan sensitivity is adjustable from 25% to 150%, with 100% as the default. The picture stays within its bounds, and switching videos resets zoom and pan.
 
-Use `=` (or `+`) to zoom in and `-` to zoom out in 25 percentage point steps, from 100% to 500%. Holding either key adjusts continuously. These defaults work in both hand layouts and can be customized in Settings.
+Use `=` (or `+`) to zoom in and `-` to zoom out in 25 percentage point steps, from 100% to 500%. Holding either key adjusts continuously. For one-handed use, the left-hand layout adds `2` / `3` to zoom out / in and `1` to fit; the right-hand layout adds `8` / `9` and `7`. These number keys need no modifiers and follow the active hand layout. An alias is available while its zoom action keeps the default primary binding; a number key assigned to another custom action retains that assignment. Zoom bindings can still be customized in Settings.
 
 Double-tap with two fingers to switch between 2× zoom and fit-to-window, or press `0` / `⌘0` to reset. Gestures that start over the playlist, controls, or help sidebar retain that surface's interaction.
 

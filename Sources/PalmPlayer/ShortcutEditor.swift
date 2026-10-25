@@ -322,7 +322,11 @@ final class ShortcutEditor: NSObject, NSTableViewDataSource, NSTableViewDelegate
     private func applyFilter() {
         let query = searchField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         entries = ShortcutPresentationGroup.all.flatMap { group -> [TableEntry] in
-            let actions = group.actions.filter { query.isEmpty || $0.title.localizedCaseInsensitiveContains(query) || store.label(for: $0, hand: hand).localizedCaseInsensitiveContains(query) }
+            let actions = group.actions.filter { action in
+                let keys = [store.label(for: action, hand: hand)] + store.aliases(for: action, hand: hand).map(\.display)
+                return query.isEmpty || action.title.localizedCaseInsensitiveContains(query)
+                    || keys.contains { $0.localizedCaseInsensitiveContains(query) }
+            }
             return actions.isEmpty ? [] : [.heading(group.title)] + actions.map(TableEntry.action)
         }
         tableView.reloadData()

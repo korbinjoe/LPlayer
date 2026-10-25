@@ -245,6 +245,14 @@ final class ShortcutStore {
         binding(for: action, hand: hand)?.display ?? aliases(for: action, hand: hand).first?.display ?? "—"
     }
 
+    /// Prefer the nearby one-hand zoom key in compact playback hints. Settings
+    /// still records the editable primary and lists every active alias.
+    func hintBinding(for action: ShortcutAction, hand: HandLayout) -> KeyChord? {
+        let aliases = aliases(for: action, hand: hand)
+        if let nearby = ShortcutDefaults.oneHandAlias(for: action, hand: hand), aliases.contains(nearby) { return nearby }
+        return binding(for: action, hand: hand) ?? aliases.first
+    }
+
     func aliases(for action: ShortcutAction, hand: HandLayout) -> [KeyChord] {
         ShortcutDefaults.aliases(for: action, hand: hand) { self.binding(for: $0, hand: hand) }
     }
@@ -359,8 +367,9 @@ final class ShortcutStore {
 }
 
 /// One registry drives both default compatibility calls and the editable store.
-/// These aliases belong to the application and cannot be stolen by a different
-/// action. Exact modifier matching avoids accidental Shift/Option commands.
+/// Fixed aliases belong to the application. Convenience zoom aliases follow
+/// the editable defaults and yield to existing custom keys. Exact modifier
+/// matching avoids accidental Shift/Option commands.
 enum ShortcutDefaults {
     private static let aliasMaps: [HandLayout: [ShortcutAction: [KeyChord]]] = {
         Dictionary(uniqueKeysWithValues: [HandLayout.left, .right].map { hand in
@@ -376,13 +385,24 @@ enum ShortcutDefaults {
 
     static func aliases(for action: ShortcutAction, hand: HandLayout, binding: (ShortcutAction) -> KeyChord?) -> [KeyChord] {
         let fixed = aliasMaps[hand]?[action] ?? []
-        guard action == .zoomIn else { return fixed }
-        // '+' is a convenience for the default '=' key, not an independent
-        // reserved shortcut. Honor remaps, disabled zoom, and older custom '+'.
-        let plus = KeyChord("+")
-        guard binding(.zoomIn) == KeyChord("="),
-              !ShortcutAction.allCases.contains(where: { $0 != .zoomIn && binding($0) == plus }) else { return fixed }
-        return fixed + [plus]
+        guard let nearby = oneHandAlias(for: action, hand: hand),
+              binding(action) == ShortcutStore.defaultBinding(for: action, hand: hand) else { return fixed }
+        // New aliases must not steal keys saved by an older installation, or
+        // reactivate an action that the user has remapped or disabled.
+        let candidates = [nearby] + (action == .zoomIn ? [KeyChord("+")] : [])
+        return fixed + candidates.filter { key in
+            !ShortcutAction.allCases.contains { $0 != action && binding($0) == key }
+        }
+    }
+
+    static func oneHandAlias(for action: ShortcutAction, hand: HandLayout) -> KeyChord? {
+        let left = hand == .left
+        switch action {
+        case .resetZoom: return KeyChord(left ? "1" : "7")
+        case .zoomOut: return KeyChord(left ? "2" : "8")
+        case .zoomIn: return KeyChord(left ? "3" : "9")
+        default: return nil
+        }
     }
 
     private static func makeAliases(for action: ShortcutAction, hand: HandLayout) -> [KeyChord] {

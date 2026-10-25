@@ -40,7 +40,7 @@ enum CoreChecks {
             try check("custom shortcut validation, clearing and defaults", shortcutCustomization)
             try check("shortcut persistence and damaged configuration recovery", shortcutPersistence)
             try check("one-hand video defaults and lossless v1 shortcut migration", shortcutPresetMigration)
-            try check("zoom defaults, remapping and lossless v1/v2 migration", zoomShortcuts)
+            try check("one-hand zoom aliases, remapping and v1/v2/v3 key ownership", zoomShortcuts)
             try check("playback time formatting", timeFormatting)
             try check("immediate and sustained seek input without stale trailing work", seekScheduling)
             print("All 15 core check groups passed.")
@@ -217,7 +217,7 @@ enum CoreChecks {
                 try require(layout.command(for: key) == command, "Shortcut label does not match its command")
                 try require(layout.command(for: key, panelOpen: true) == command, "Global reminder or video shortcut failed with panel open")
             }
-            try require(layout.command(for: "2") == nil, "Unknown key triggered an action")
+            try require(layout.command(for: "4") == nil, "Unknown key triggered an action")
         }
     }
 
@@ -255,8 +255,8 @@ enum CoreChecks {
             for hand in [HandLayout.left, .right] {
                 let back = hand == .left ? "a" : "j", forward = hand == .left ? "d" : "l"
                 for (action, key, command) in [
-                    (ShortcutAction.seekBackward, "2", PlayerCommand.seek(-5)),
-                    (.seekForward, "3", .seek(5)), (.seekBackwardLarge, "4", .seek(-30)), (.seekForwardLarge, "5", .seek(30))
+                    (ShortcutAction.seekBackward, "4", PlayerCommand.seek(-5)),
+                    (.seekForward, "5", .seek(5)), (.seekBackwardLarge, "F6", .seek(-30)), (.seekForwardLarge, "F7", .seek(30))
                 ] {
                     try require(store.setBinding(KeyChord(key), for: action, hand: hand) == nil, "Could not remap a seek action")
                     try require(store.command(for: KeyChord(key), hand: hand, context: .playlist) == command, "Playlist did not honor a customized seek key")
@@ -340,7 +340,7 @@ enum CoreChecks {
             }
             try require(store.binding(for: .playlist, hand: .right) == KeyChord("'"), "Right-hand playlist was not moved near the hand cluster")
             try require(store.command(for: KeyChord("b"), hand: .right, context: .playback) == .playlist, "Right-hand legacy playlist alias was lost")
-            try require(store.setBinding(KeyChord("2"), for: .volumeUp, hand: .left) == nil, "Volume remap failed")
+            try require(store.setBinding(KeyChord("4"), for: .volumeUp, hand: .left) == nil, "Volume remap failed")
             try require(store.setBinding(KeyChord("w"), for: .mute, hand: .left) == nil, "Reusing a freed primary failed")
             try require(store.command(for: KeyChord("w"), hand: .left, context: .playback) == .mute, "Playback did not honor the remapped key")
             try require(store.command(for: KeyChord("w"), hand: .left, context: .panel) == .panelMove(-1), "Custom playback key displaced panel navigation")
@@ -367,12 +367,12 @@ enum CoreChecks {
             try require(store.command(for: KeyChord("i", modifiers: .command), hand: .right, context: .panel) == .panel, "Modified panel toggle could not close its own panel")
             store.resetAll(hand: .left)
             store.resetAll(hand: .right)
-            try require(store.setBinding(KeyChord("2", modifiers: .option), for: .mute, hand: .left) == nil, "An available key could not be assigned")
-            try require(store.label(for: .mute, hand: .left) == "⌥2", "Shortcut label did not reflect the edit")
-            try require(store.command(for: KeyChord("2", modifiers: .option), hand: .left, context: .playback) == .mute, "Customized command did not resolve")
-            try require(store.command(for: KeyChord("2"), hand: .left, context: .playback) == nil, "Custom key ignored modifier exactness")
+            try require(store.setBinding(KeyChord("4", modifiers: .option), for: .mute, hand: .left) == nil, "An available key could not be assigned")
+            try require(store.label(for: .mute, hand: .left) == "⌥4", "Shortcut label did not reflect the edit")
+            try require(store.command(for: KeyChord("4", modifiers: .option), hand: .left, context: .playback) == .mute, "Customized command did not resolve")
+            try require(store.command(for: KeyChord("4"), hand: .left, context: .playback) == nil, "Custom key ignored modifier exactness")
             let saved = defaults.data(forKey: ShortcutStore.storageKey), notice = notifications
-            for bad in [KeyChord("a"), KeyChord("2", modifiers: .option), KeyChord("l", modifiers: .command), KeyChord("/"), KeyChord("?"), KeyChord("b")] {
+            for bad in [KeyChord("a"), KeyChord("4", modifiers: .option), KeyChord("l", modifiers: .command), KeyChord("/"), KeyChord("?"), KeyChord("b")] {
                 let hand: HandLayout = bad == KeyChord("b") ? .right : .left
                 try require(store.setBinding(bad, for: .zoomIn, hand: hand) != nil, "A duplicate / alias key was assigned")
             }
@@ -395,11 +395,11 @@ enum CoreChecks {
             try require(store.command(for: KeyChord("t"), hand: .left, context: .playback) == nil, "Cleared primary still executed")
             try require(store.command(for: KeyChord("l", modifiers: .command), hand: .left, context: .playback) == .playlist, "Clearing a primary disabled its standard alias")
             try require(store.setBinding(KeyChord("3"), for: .mute, hand: .right) == nil, "Other-hand customization failed")
-            try require(store.binding(for: .mute, hand: .left) == KeyChord("2", modifiers: .option), "Other-hand edit changed the active hand")
+            try require(store.binding(for: .mute, hand: .left) == KeyChord("4", modifiers: .option), "Other-hand edit changed the active hand")
             store.resetAll(hand: .left)
             try require(!store.hasCustomizations(hand: .left) && store.hasCustomizations(hand: .right), "Reset-all affected the wrong hand")
             try require(store.binding(for: .playlist, hand: .left) == KeyChord("t"), "Reset-all did not restore the primary")
-            try require(store.setBinding(KeyChord("2"), for: .seekBackward, hand: .left) == nil, "Freed-key fixture failed")
+            try require(store.setBinding(KeyChord("4"), for: .seekBackward, hand: .left) == nil, "Freed-key fixture failed")
             try require(store.setBinding(KeyChord("a"), for: .mute, hand: .left) == nil, "Freed key could not be borrowed")
             store.reset(.seekBackward, hand: .left)
             try require(store.binding(for: .seekBackward, hand: .left) == KeyChord("a") && store.binding(for: .mute, hand: .left) == nil, "Per-action reset left a duplicate key")
@@ -502,6 +502,9 @@ enum CoreChecks {
 
     private static func zoomShortcuts() throws {
         for hand in [HandLayout.left, .right] {
+            let nearby: [(ShortcutAction, String, PlayerCommand)] = hand == .left
+                ? [(.resetZoom, "1", .resetZoom), (.zoomOut, "2", .zoom(-0.25)), (.zoomIn, "3", .zoom(0.25))]
+                : [(.resetZoom, "7", .resetZoom), (.zoomOut, "8", .zoom(-0.25)), (.zoomIn, "9", .zoom(0.25))]
             try shortcutFixture { defaults in
                 let store = ShortcutStore(defaults: defaults)
                 for context in [ShortcutContext.playback, .panel, .playlist] {
@@ -511,24 +514,72 @@ enum CoreChecks {
                     for key in [KeyChord("=", modifiers: .command), KeyChord("-", modifiers: .option), KeyChord("-", modifiers: .shift), KeyChord("+", modifiers: .control)] {
                         try require(store.command(for: key, hand: hand, context: context) == nil, "Zoom shortcuts ignored exact modifiers")
                     }
+                    for (action, key, command) in nearby {
+                        try require(store.command(for: KeyChord(key), hand: hand, context: context) == command, "A nearby zoom key was trapped by visible-mode routing")
+                        try require(store.hintBinding(for: action, hand: hand) == KeyChord(key), "Compact hints did not prefer the active nearby zoom key")
+                        for modifier: ShortcutModifiers in [.shift, .command, .option, .control, [.shift, .option]] {
+                            try require(store.command(for: KeyChord(key, modifiers: modifier), hand: hand, context: context) == nil, "A nearby zoom key ignored exact modifiers")
+                        }
+                    }
+                    for key in hand == .left ? ["7", "8", "9"] : ["1", "2", "3"] {
+                        try require(store.command(for: KeyChord(key), hand: hand, context: context) == nil, "Zoom aliases leaked from the other hand")
+                    }
                 }
                 try require(hand.command(for: "=") == .zoom(0.25) && hand.command(for: "+") == .zoom(0.25) && hand.command(for: "-") == .zoom(-0.25), "Stateless keyboard layout differed from the shortcut store")
-                try require(store.setBinding(KeyChord("2"), for: .zoomIn, hand: hand) == nil, "Zoom-in could not be remapped")
-                try require(store.command(for: KeyChord("2"), hand: hand, context: .playback) == .zoom(0.25), "Remapped zoom-in did not execute")
-                for key in [KeyChord("="), KeyChord("+")] {
+                for (_, key, command) in nearby {
+                    try require(hand.command(for: key) == command && hand.command(for: key, panelOpen: true) == command && hand.command(for: key, playlistOpen: true) == command, "Stateless nearby zoom routing differed from the shortcut store")
+                    try require(store.setBinding(KeyChord(key), for: .mute, hand: hand) != nil, "An active nearby zoom key was assigned to a different action")
+                }
+                try require(store.setBinding(KeyChord("4"), for: .zoomIn, hand: hand) == nil, "Zoom-in could not be remapped")
+                try require(store.command(for: KeyChord("4"), hand: hand, context: .playback) == .zoom(0.25) && store.hintBinding(for: .zoomIn, hand: hand) == KeyChord("4"), "Remapped zoom-in did not execute or update its hint")
+                for key in [KeyChord("="), KeyChord("+"), KeyChord(nearby[2].1)] {
                     try require(store.command(for: key, hand: hand, context: .playback) == nil, "Remapping zoom-in retained its old default or convenience alias")
                 }
-                try require(store.setBinding(nil, for: .zoomIn, hand: hand) == nil && store.setBinding(nil, for: .zoomOut, hand: hand) == nil, "Zoom actions could not be disabled")
+                try require(store.setBinding(KeyChord("5"), for: .zoomOut, hand: hand) == nil && store.setBinding(KeyChord("6"), for: .resetZoom, hand: hand) == nil, "Zoom-out and fit could not be remapped")
+                let remapped = ShortcutStore(defaults: defaults)
+                for (action, key, command) in [(ShortcutAction.zoomIn, "4", PlayerCommand.zoom(0.25)), (.zoomOut, "5", .zoom(-0.25)), (.resetZoom, "6", .resetZoom)] {
+                    try require(remapped.command(for: KeyChord(key), hand: hand, context: .playback) == command && remapped.hintBinding(for: action, hand: hand) == KeyChord(key), "A remapped zoom command or hint did not survive reload")
+                }
+                for (_, key, _) in nearby {
+                    try require(remapped.command(for: KeyChord(key), hand: hand, context: .playback) == nil, "A nearby alias returned after reloading a remap")
+                }
+                try require(remapped.command(for: KeyChord("0", modifiers: .command), hand: hand, context: .playback) == .resetZoom, "Remapping fit removed its fixed menu alias")
+                try require(store.setBinding(nil, for: .zoomIn, hand: hand) == nil && store.setBinding(nil, for: .zoomOut, hand: hand) == nil && store.setBinding(nil, for: .resetZoom, hand: hand) == nil, "Zoom actions could not be disabled")
                 let disabled = ShortcutStore(defaults: defaults)
-                for key in [KeyChord("="), KeyChord("+"), KeyChord("-")] {
+                for key in [KeyChord("="), KeyChord("+"), KeyChord("-"), KeyChord("0")] + nearby.map({ KeyChord($0.1) }) {
                     try require(disabled.command(for: key, hand: hand, context: .playback) == nil, "A disabled zoom action returned after reload")
                 }
+                try require(disabled.hintBinding(for: .zoomIn, hand: hand) == nil && disabled.hintBinding(for: .zoomOut, hand: hand) == nil && disabled.hintBinding(for: .resetZoom, hand: hand) == KeyChord("0", modifiers: .command), "Disabled zoom hints advertised inactive keys")
                 try require(store.setBinding(KeyChord("+"), for: .mute, hand: hand) == nil, "Disabled zoom did not release '+'")
                 store.reset(.zoomIn, hand: hand)
                 try require(store.command(for: KeyChord("="), hand: hand, context: .playback) == .zoom(0.25), "Reset did not restore '=' zoom-in")
                 try require(store.command(for: KeyChord("+"), hand: hand, context: .playback) == .mute, "Reset zoom-in stole a customized '+'")
                 store.reset(.mute, hand: hand)
                 try require(store.command(for: KeyChord("+"), hand: hand, context: .playback) == .zoom(0.25), "Freeing '+' did not restore the convenience alias")
+            }
+            // A numeric key may already belong to any saved profile. Resolve
+            // that actual persisted configuration instead of rewriting it to
+            // make room for a new convenience key.
+            for version in [1, 2, 3] {
+                for (action, key, command) in nearby {
+                    try shortcutFixture { defaults in
+                        let data = try JSONSerialization.data(withJSONObject: ["version": version, "hands": [hand.rawValue: ["mute": ["chord": ["key": key, "modifiers": 0]]]]])
+                        defaults.set(data, forKey: ShortcutStore.storageKey)
+                        let first = ShortcutStore(defaults: defaults)
+                        let persisted = defaults.data(forKey: ShortcutStore.storageKey)
+                        for store in [first, ShortcutStore(defaults: defaults)] {
+                            try require(store.binding(for: .mute, hand: hand) == KeyChord(key), "Adding one-hand zoom discarded a saved custom key")
+                            for context in [ShortcutContext.playback, .panel, .playlist] {
+                                try require(store.command(for: KeyChord(key), hand: hand, context: context) == .mute, "A one-hand zoom alias stole a saved custom command")
+                                try require(store.command(for: ShortcutStore.defaultBinding(for: action, hand: hand)!, hand: hand, context: context) == command, "An alias collision disabled the editable zoom primary")
+                            }
+                            try require(!store.aliases(for: action, hand: hand).contains(KeyChord(key)) && store.hintBinding(for: action, hand: hand) == ShortcutStore.defaultBinding(for: action, hand: hand), "A hint advertised a one-hand key owned by another action")
+                        }
+                        try require(defaults.data(forKey: ShortcutStore.storageKey) == persisted && (version != 3 || persisted == data), "Loading a valid numeric custom key rewrote the current profile")
+                        first.reset(.mute, hand: hand)
+                        try require(first.command(for: KeyChord(key), hand: hand, context: .playback) == command && first.hintBinding(for: action, hand: hand) == KeyChord(key), "Freeing a saved numeric key did not restore its zoom alias and hint")
+                    }
+                }
             }
             let fixtures: [(custom: [ShortcutAction: KeyChord?], zoomIn: KeyChord?, zoomOut: KeyChord?)] = [
                 ([.mute: KeyChord("=")], nil, KeyChord("-")),

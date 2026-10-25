@@ -1711,11 +1711,10 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         refreshShortcutPresentation(); showHUD(L10n.text("Layout · \(hand.title)", "已切换 · \(hand.title)"))
     }
 
-    /// The editable primary wins in compact badges; fixed alternatives remain
-    /// discoverable in tooltips and keep familiar native shortcuts available.
+    /// Compact badges favor nearby zoom keys and otherwise show the editable
+    /// primary; tooltips list all active alternatives.
     private func shortcutLabel(_ action: ShortcutAction) -> String {
-        shortcuts.binding(for: action, hand: hand)?.display
-            ?? shortcuts.aliases(for: action, hand: hand).first?.display ?? "—"
+        shortcuts.hintBinding(for: action, hand: hand)?.display ?? "—"
     }
 
     private func shortcutDescription(_ action: ShortcutAction) -> String {

@@ -29,8 +29,9 @@
       { title: '画面与字幕', rows: [
         { label: '进入 / 退出全屏', keys: [left ? 'F' : 'H'], terms: '全屏 fullscreen' },
         { label: '显示 / 隐藏字幕', keys: [left ? 'G' : ';'], terms: '字幕 subtitle' },
-        { label: '放大 / 缩小画面', keys: ['= / +', '-'], terms: '画面 缩放 放大 缩小 25% zoom in out' },
-        { label: '画面适应窗口', keys: ['0'], terms: '画面 缩放 复原 适应 zoom' }
+        { label: '放大画面', keys: [left ? '3' : '9', '= / +'], terms: '单手 画面 缩放 放大 25% zoom in' },
+        { label: '缩小画面', keys: [left ? '2' : '8', '-'], terms: '单手 画面 缩放 缩小 25% zoom out' },
+        { label: '画面适应窗口', keys: [left ? '1' : '7', '0 / ⌘0'], terms: '单手 画面 缩放 复原 适应 zoom fit' }
       ] },
       { title: '文件与面板', rows: [
         { label: '播放列表', keys: [left ? 'T' : "'"], terms: '播放列表 playlist' },
