@@ -5,6 +5,7 @@ artifacts/
 *.log
 __pycache__/
 .swiftpm/
+.playwright-cli/
 *.app/
 *.dSYM/
 *.pyc

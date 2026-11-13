@@ -38,7 +38,7 @@ private struct ZoomPresentation: Equatable {
     var resetKey: String; var zoomKeys: String; var language: AppLanguage; var panning: Bool
 }
 
-final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuItemValidation {
+final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuItemValidation, NSGestureRecognizerDelegate {
     private static let topBarHeight: CGFloat = 38
     private static let bottomBarHeight: CGFloat = 56
     private var window: NSWindow!
@@ -90,6 +90,8 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
     private var thumbnailPauseUntil = Date.distantPast
     private var hand = HandLayout(rawValue: UserDefaults.standard.string(forKey: "handLayout") ?? "left") ?? .left
     private var keyMonitor: Any?
+    private lazy var videoSingleClick = NSClickGestureRecognizer(target: self, action: #selector(videoClicked))
+    private lazy var videoDoubleClick = NSClickGestureRecognizer(target: self, action: #selector(fullscreen))
     private var titlebarObservations: [NSKeyValueObservation] = []
     private var titlebarLayoutPending = false
     private var audioListener: AudioObjectPropertyListenerBlock?
@@ -258,8 +260,10 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         // The playback rectangle is explicitly laid out beside the help rail.
         engine.videoView.autoresizingMask = []
         surface.addSubview(engine.videoView)
-        let click = NSClickGestureRecognizer(target: self, action: #selector(videoClicked))
-        engine.videoView.addGestureRecognizer(click)
+        videoDoubleClick.numberOfClicksRequired = 2
+        videoSingleClick.delegate = self
+        engine.videoView.addGestureRecognizer(videoSingleClick)
+        engine.videoView.addGestureRecognizer(videoDoubleClick)
         let overlays: [NSView] = [emptyState, mediaBadge, topBar, bottomBar, thumbnailPreview, hud, videoZoomHint, help, playlist, panel, errorBox]
         for view in overlays { surface.addSubview(view) }
         topBar.wantsLayer = true
@@ -445,7 +449,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         updateSubtitleSafeArea()
         let chromeColor = isFullscreen ? Palette.panel : Palette.chrome
         topBar.layer?.backgroundColor = chromeColor.cgColor
-        bottomBar.layer?.backgroundColor = chromeColor.cgColor
+        bottomBar.layer?.backgroundColor = (isFullscreen ? Palette.transportOverlay : Palette.chrome).cgColor
         help.overlaysVideo = isFullscreen
         playlist.overlaysVideo = isFullscreen
         emptyState.frame = NSRect(x: 0, y: 0, width: playerWidth, height: h - topHeight)
@@ -816,8 +820,13 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         let target = max(0, min(engine.snapshot.duration - 0.05, base + delta))
         seekTarget = target; lastSeekDate = now
         seekScheduler.request(target)
+        showSeekProgress(at: target)
+    }
+
+    private func showSeekProgress(at target: Double) {
         progress.doubleValue = target
-        showHUD("\(delta < 0 ? "←" : "→")  \(clockText(target))  /  \(clockText(engine.snapshot.duration))")
+        updatePlaybackTime(position: target, duration: engine.snapshot.duration)
+        showControls()
     }
 
     private func submitSeek(to target: Double) {
@@ -889,7 +898,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
                 let before = engine.snapshot.position; seekScheduler.cancel(); seekTarget = target
                 lastSeekDate = Date()
                 submitSeek(to: target); undoPosition = before
-                showHUD(L10n.text("Returned · \(clockText(target))", "已返回 · \(clockText(target))"))
+                showSeekProgress(at: target)
             } else { showHUD(L10n.text("No seek to undo yet", "还没有可撤销的跳转")) }
         case .panel: togglePanel()
         case .help: toggleHelp()
@@ -1235,6 +1244,9 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         showControls()
     }
     @objc private func videoClicked() { window.makeFirstResponder(surface); togglePause() }
+    func gestureRecognizer(_ gestureRecognizer: NSGestureRecognizer, shouldRequireFailureOf otherGestureRecognizer: NSGestureRecognizer) -> Bool {
+        gestureRecognizer === videoSingleClick && otherGestureRecognizer === videoDoubleClick
+    }
     @objc private func backward() { seek(by: -5) }
     @objc private func forward() { seek(by: 5) }
     @objc private func fullscreen() { window.toggleFullScreen(nil); window.makeFirstResponder(surface) }
@@ -1250,7 +1262,7 @@ final class PlayerApp: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenu
         undoPosition = engine.snapshot.position; seekScheduler.cancel()
         seekTarget = progress.doubleValue; lastSeekDate = Date()
         submitSeek(to: progress.doubleValue)
-        showHUD(clockText(progress.doubleValue))
+        showSeekProgress(at: progress.doubleValue)
         window.makeFirstResponder(surface)
     }
     @objc private func changeVolume() { setVolume(volume.doubleValue) }

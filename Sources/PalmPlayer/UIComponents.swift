@@ -5,6 +5,7 @@ enum Palette {
     // Shared by every floating playback surface. Keep text and images solid;
     // only the backdrop lets the picture through.
     static let panel = NSColor(srgbRed: 0.135, green: 0.139, blue: 0.153, alpha: 0.72)
+    static let transportOverlay = NSColor(srgbRed: 0.135, green: 0.139, blue: 0.153, alpha: 0.48)
     static let overlaySecondary = NSColor(srgbRed: 0.85, green: 0.855, blue: 0.88, alpha: 1)
     static let accent = NSColor(srgbRed: 0.039, green: 0.518, blue: 1, alpha: 1)
     static let muted = NSColor(srgbRed: 0.60, green: 0.605, blue: 0.64, alpha: 1)
